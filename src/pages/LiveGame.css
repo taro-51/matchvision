@@ -1,0 +1,43 @@
+.live-page { max-width: 1500px; margin: 0 auto; padding: 26px 30px 42px; color: #eef2f7; }
+.live-search-panel { display: flex; justify-content: space-between; align-items: end; gap: 22px; padding: 20px; border: 1px solid #29333e; border-radius: 16px; background: #121921; }
+.live-search-panel > div:first-child span { color: #ff6172; font-size: 10px; font-weight: 900; letter-spacing: .14em; }
+.live-search-panel h2 { margin: 7px 0 4px; }
+.live-search-panel p { margin: 0; color: #8e9aa8; }
+.live-search-controls { display: flex; gap: 9px; flex-wrap: wrap; }
+.live-search-controls label { width: min(460px,46vw); display: flex; align-items: center; gap: 8px; padding: 0 12px; min-height: 44px; border: 1px solid #303b47; border-radius: 10px; background: #0e141b; }
+.live-search-controls input { width: 100%; border: 0; outline: 0; color: #eef2f7; background: transparent; }
+.live-search-controls select { min-height: 44px; padding: 0 12px; border: 1px solid #303b47; border-radius: 10px; color: #eef2f7; background: #0e141b; }
+
+.live-page-layout { display: grid; grid-template-columns: minmax(300px,.55fr) minmax(0,1.45fr); gap: 16px; margin-top: 16px; }
+.live-game-list, .live-viewer { border: 1px solid #29333e; border-radius: 16px; background: #121921; overflow: hidden; }
+.live-game-list header { display: flex; justify-content: space-between; padding: 18px; border-bottom: 1px solid #29333e; }
+.live-game-list h3 { margin: 0; }
+.live-game-list header span { display: grid; place-items: center; width: 25px; height: 25px; border-radius: 50%; background: #d72d42; font-size: 10px; }
+.live-game-list > button { width: 100%; display: grid; grid-template-columns: 55px minmax(0,1fr) auto; align-items: center; gap: 10px; padding: 16px; border: 0; border-bottom: 1px solid #252e38; color: #dce3ea; background: transparent; text-align: left; }
+.live-game-list > button.selected { background: linear-gradient(90deg,rgba(216,45,65,.16),transparent); box-shadow: inset 3px 0 0 #d72d42; }
+.live-pill { padding: 6px 8px; border-radius: 999px; color: #ff6c7c; background: #341b20; font-size: 9px; font-weight: 900; text-align: center; }
+.live-game-list strong, .live-game-list small { display: block; }
+.live-game-list small { margin-top: 4px; color: #8491a0; }
+
+.live-viewer { padding: 18px; }
+.live-video { position: relative; height: 460px; display: grid; place-items: center; overflow: hidden; border-radius: 14px; background: radial-gradient(circle at 50% 112%,rgba(25,137,84,.6),transparent 43%),linear-gradient(145deg,#10202e,#07121d); }
+.video-top { position: absolute; top: 14px; left: 14px; right: 14px; display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-radius: 9px; background: rgba(6,11,17,.82); }
+.video-top span { color: #ff6676; font-weight: 900; }
+.video-score { display: flex; align-items: center; gap: 55px; }
+.video-score img { width: 120px; height: 120px; object-fit: contain; }
+.video-score > strong { font-size: 54px; }
+.live-opponent { width: 110px; height: 122px; display: grid; place-items: center; border: 5px solid #0a1119; border-radius: 18px 18px 30px 30px; background: linear-gradient(90deg,#188ece 0 33%,#0f1823 33% 66%,#188ece 66%); box-shadow: inset 0 0 0 2px #d6edf9; font-size: 20px; font-weight: 900; }
+.live-video > button { position: absolute; width: 68px; height: 68px; border: 0; border-radius: 50%; color: #fff; background: #d72d42; font-size: 24px; }
+.live-video > small { position: absolute; right: 16px; bottom: 14px; color: #c5ced7; }
+
+.live-analytics { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+.live-analytics section { padding: 17px; border: 1px solid #29333e; border-radius: 13px; background: #0e151d; }
+.live-analytics section > span { color: #ff6172; font-size: 9px; font-weight: 900; letter-spacing: .13em; }
+.live-analytics h3 { margin: 8px 0; font-size: 15px; }
+.live-analytics p { color: #8e9aa8; font-size: 11px; }
+.live-metric-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 8px; margin-top: 12px; }
+.live-metric-grid div { padding: 12px; border-radius: 9px; background: #19212b; text-align: center; }
+.live-metric-grid b, .live-metric-grid small { display: block; }
+.live-metric-grid small { margin-top: 3px; color: #8f9ba8; }
+
+@media (max-width: 1100px) { .live-page-layout, .live-analytics { grid-template-columns: 1fr; } }

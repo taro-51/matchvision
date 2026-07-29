@@ -1,0 +1,54 @@
+{
+  "demoFileName": "Springvale_U11_vs_Oakleigh_AI_Demo.mp4",
+  "match": {
+    "home": "Springvale City U11 Wallabies",
+    "away": "Oakleigh United U11",
+    "score": "3\u20132",
+    "venue": "Ross Reserve",
+    "pitch": "Pitch 1",
+    "coach": "Lisa Pitsos"
+  },
+  "detectedPlayers": [
+    {
+      "id": "ava",
+      "name": "Ava Thompson",
+      "number": 9,
+      "confidence": 0.96
+    },
+    {
+      "id": "mia",
+      "name": "Mia Rodriguez",
+      "number": 10,
+      "confidence": 0.92
+    },
+    {
+      "id": "lily-chen",
+      "name": "Lily Chen",
+      "number": 4,
+      "confidence": 0.9
+    }
+  ],
+  "coachFindings": {
+    "possession": "57%",
+    "shots": 8,
+    "passAccuracy": "78%",
+    "recoveryTime": "6.8 sec",
+    "priority": "Defensive transitions",
+    "recommendedDrills": [
+      "Recovery Defending: 2v1",
+      "Compact Shape: 4v4 + Targets",
+      "Six-Second Transition Game"
+    ]
+  },
+  "avaPrivateReport": {
+    "goals": 1,
+    "assists": 1,
+    "passes": "21 / 27",
+    "chancesCreated": 4,
+    "recoveries": 7,
+    "touches": 38,
+    "distanceCovered": "5.4 km",
+    "sprintCount": 12,
+    "aiRating": 8.6
+  }
+}
