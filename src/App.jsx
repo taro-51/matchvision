@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "./App.css";
 import Dashboard from "./pages/Dashboard";
 import LiveGame from "./pages/LiveGame";
@@ -11,6 +11,7 @@ import DrillExchange from "./pages/CoachHub/DrillExchange";
 import CoachProfiles from "./pages/CoachHub/CoachProfiles";
 import SessionBuilder from "./pages/CoachHub/SessionBuilder";
 import PlaceholderPage from "./pages/PlaceholderPage";
+import { MobileDrawer } from "./components/AppNavigation";
 import springvaleLogo from "./assets/springvale-city-logo.png";
 
 const navigation = [
@@ -186,6 +187,7 @@ const demoAccounts = [
 export default function App() {
   const [sessionUser, setSessionUser] = useState(null);
   const [page, setPage] = useState("dashboard");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const visibleNavigation = useMemo(
     () =>
@@ -197,6 +199,27 @@ export default function App() {
 
   const currentPage =
     navigation.find((item) => item.id === page) || navigation[0];
+
+  useEffect(() => {
+    if (!isMobileMenuOpen) return undefined;
+
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape") setIsMobileMenuOpen(false);
+    };
+
+    document.body.classList.add("mobile-menu-open");
+    window.addEventListener("keydown", closeOnEscape);
+
+    return () => {
+      document.body.classList.remove("mobile-menu-open");
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [isMobileMenuOpen]);
+
+  function navigateTo(nextPage) {
+    setPage(nextPage);
+    setIsMobileMenuOpen(false);
+  }
 
   function login(account) {
     setSessionUser(account);
@@ -216,6 +239,7 @@ export default function App() {
   function logout() {
     setSessionUser(null);
     setPage("dashboard");
+    setIsMobileMenuOpen(false);
 
     try {
       window.localStorage.removeItem("matchvisionUser");
@@ -231,7 +255,20 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      <aside className="sidebar">
+      <MobileDrawer
+        items={visibleNavigation}
+        page={page}
+        user={sessionUser}
+        isOpen={isMobileMenuOpen}
+        onNavigate={navigateTo}
+        onClose={() => setIsMobileMenuOpen(false)}
+        onLogout={logout}
+      />
+
+      <aside
+        className="sidebar desktop-sidebar"
+        aria-label="Primary navigation"
+      >
         <div className="brand-row">
           <div className="brand-mark">MV</div>
           <div>
@@ -268,7 +305,7 @@ export default function App() {
                   page === item.id ? "active" : "",
                   item.child ? "nav-child" : "",
                 ].join(" ")}
-                onClick={() => setPage(item.id)}
+                onClick={() => navigateTo(item.id)}
               >
                 <span className="nav-symbol">{item.icon}</span>
                 <span>{item.label}</span>
@@ -301,7 +338,18 @@ export default function App() {
 
       <main className="main-column">
         <header className="topbar">
-          <div>
+          <button
+            type="button"
+            className="mobile-menu-button"
+            aria-label="Open navigation menu"
+            aria-controls="mobile-navigation"
+            aria-expanded={isMobileMenuOpen}
+            onClick={() => setIsMobileMenuOpen(true)}
+          >
+            <span aria-hidden="true">☰</span>
+          </button>
+
+          <div className="topbar-title">
             <span className="portal-label">
               {sessionUser.title}
             </span>
@@ -347,7 +395,7 @@ export default function App() {
             <Dashboard
               role={sessionUser.role}
               user={sessionUser}
-              onNavigate={setPage}
+              onNavigate={navigateTo}
             />
           )}
 
@@ -362,7 +410,7 @@ export default function App() {
             <MatchLibrary
               role={sessionUser.role}
               user={sessionUser}
-              onNavigate={setPage}
+              onNavigate={navigateTo}
             />
           )}
 
@@ -371,7 +419,7 @@ export default function App() {
               <AIAnalysis
                 role={sessionUser.role}
                 user={sessionUser}
-                onNavigate={setPage}
+                onNavigate={navigateTo}
               />
             )}
 
@@ -380,7 +428,7 @@ export default function App() {
               <Equipment
                 role={sessionUser.role}
                 user={sessionUser}
-                onNavigate={setPage}
+                onNavigate={navigateTo}
               />
             )}
 
@@ -401,12 +449,12 @@ export default function App() {
 
           {page === "admin" &&
             sessionUser.role === "admin" && (
-              <AdminClub user={sessionUser} onNavigate={setPage} />
+              <AdminClub user={sessionUser} onNavigate={navigateTo} />
             )}
 
           {page === "football-intelligence" &&
             sessionUser.role === "admin" && (
-              <FootballIntelligence onNavigate={setPage} />
+              <FootballIntelligence onNavigate={navigateTo} />
             )}
 
           {![

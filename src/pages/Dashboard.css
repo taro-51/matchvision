@@ -72,3 +72,22 @@
 @media (max-width: 1150px) {
   .mv-dashboard-grid, .mv-dashboard-bottom { grid-template-columns: 1fr; }
 }
+
+@media (max-width: 768px) {
+  .mv-dashboard { padding: 18px 16px 32px; }
+  .mv-welcome h2 { font-size: 24px; }
+  .mv-live-hero { padding: 16px; }
+  .mv-live-status { align-items: flex-start; flex-wrap: wrap; }
+  .mv-live-status small { order: 3; width: 100%; margin-left: 0; }
+  .mv-live-score { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .mv-score-centre { grid-column: 1 / -1; grid-row: 1; }
+  .mv-team img { width: 82px; height: 82px; }
+  .mv-opponent { width: 76px; height: 88px; }
+  .mv-score-centre > strong { font-size: 52px; }
+  .mv-live-stats { grid-template-columns: repeat(2, 1fr); }
+  .mv-live-stats div { border-right: 0; border-bottom: 1px solid rgba(255,255,255,.13); }
+  .mv-live-stats div:last-child { grid-column: 1 / -1; }
+  .mv-live-actions button { width: 100%; min-width: 0; }
+  .mv-assistant { align-items: flex-start; flex-direction: column; }
+  .mv-assistant button { width: 100%; }
+}

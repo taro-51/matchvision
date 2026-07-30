@@ -762,4 +762,10 @@
   .full-findings-grid {
     grid-template-columns: 1fr;
   }
+
+  .analysis-hero-actions, .recommendation-controls, .session-footer-actions { width: 100%; }
+  .analysis-hero-actions button, .recommendation-controls button, .session-footer-actions button { width: 100%; }
+  .analysis-modal-backdrop { padding: 10px; }
+  .analysis-detail-modal, .session-modal { width: 100%; max-height: calc(100dvh - 20px); }
+  .analysis-toast { right: 12px; bottom: 12px; left: 12px; text-align: center; }
 }

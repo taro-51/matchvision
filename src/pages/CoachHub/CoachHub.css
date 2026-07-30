@@ -996,6 +996,18 @@
   .portfolio-metrics {
     grid-template-columns: 1fr;
   }
+
+  .hub-stat { width: 100%; min-width: 0; }
+  .session-layout { grid-template-columns: minmax(0, 1fr); }
+  .session-timeline li { grid-template-columns: 58px minmax(0, 1fr); padding: 12px 0; }
+  .session-timeline button { grid-column: 2; width: 100%; }
+  .coach-modal-backdrop { padding: 10px; }
+  .drill-detail-modal, .upload-drill-modal, .coach-profile-modal { width: 100%; max-height: calc(100dvh - 20px); }
+  .drill-detail-layout, .profile-modal-content { padding: 16px; }
+  .large-pitch { min-height: 280px; }
+  .upload-drill-modal footer { flex-direction: column-reverse; }
+  .upload-drill-modal footer button { width: 100%; }
+  .coach-toast { right: 12px; bottom: 12px; left: 12px; text-align: center; }
 }
 
 
