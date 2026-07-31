@@ -1032,3 +1032,4 @@
 .ai-session-source strong {
   color: #eef2f7;
 }
+.ai-session-source>div{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}.ai-session-source small{padding:6px 8px;border-radius:999px;color:#ff7181;background:#29212a;font-size:8px;font-weight:800}

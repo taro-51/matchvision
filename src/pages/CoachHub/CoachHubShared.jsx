@@ -886,6 +886,7 @@ function SessionBuilder() {
   const [generated, setGenerated] = useState(false);
   const [saved, setSaved] = useState(false);
   const [sourceMatch, setSourceMatch] = useState("");
+  const [opponentDrills, setOpponentDrills] = useState([]);
   const [recommendedEquipment, setRecommendedEquipment] = useState([
     { id: "balls", name: "Size 4 footballs", required: 12 },
     { id: "cones", name: "Flat marker cones", required: 24 },
@@ -907,6 +908,7 @@ function SessionBuilder() {
         setDuration("70 minutes");
         setGenerated(true);
         setSourceMatch(recommendation.sourceMatch || "");
+        if (Array.isArray(recommendation.selectedDrills)) setOpponentDrills(recommendation.selectedDrills);
         if (Array.isArray(recommendation.equipment)) setRecommendedEquipment(recommendation.equipment);
       }
     } catch {
@@ -945,6 +947,7 @@ function SessionBuilder() {
             <div className="ai-session-source">
               <span>LOADED FROM AI ANALYSIS</span>
               <strong>{sourceMatch}</strong>
+              {opponentDrills.length > 0 && <div>{opponentDrills.map((drill) => <small key={drill}>{drill}</small>)}</div>}
             </div>
           )}
 
@@ -1100,7 +1103,7 @@ function SessionBuilder() {
                 className="coach-primary-button full-width"
                 onClick={() => {
                   try {
-                    localStorage.setItem("matchvisionSavedSession", JSON.stringify({ title: `${objective} · ${duration}`, objective, duration, playerCount, intensity, sourceMatch, equipment: recommendedEquipment }));
+                    localStorage.setItem("matchvisionSavedSession", JSON.stringify({ title: `${objective} · ${duration}`, objective, duration, playerCount, intensity, sourceMatch, selectedDrills: opponentDrills, equipment: recommendedEquipment }));
                     localStorage.setItem("matchvisionEquipmentRecommendation", JSON.stringify(recommendedEquipment));
                   } catch {}
                   setSaved(true);

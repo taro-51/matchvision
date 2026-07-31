@@ -1,9 +1,26 @@
+import { useState } from "react";
 import "./Dashboard.css";
 import springvaleLogo from "../assets/springvale-city-logo.png";
+import { demoAwardHistory, demoPlayerProfiles } from "../data/playerProfile";
+import { getRecognitionRecords } from "../data/recognition";
 
 export default function Dashboard({ role = "coach", user, onNavigate }) {
   const individualMode = role === "parent" || role === "player";
   const firstName = user?.name?.split(" ")[0] || "Lisa";
+  const linkedChildren = role === "parent" ? user?.linkedChildren || [] : [];
+  const [activeChildId, setActiveChildId] = useState(linkedChildren[0]?.id || "ava");
+  const child = demoPlayerProfiles[activeChildId] || demoPlayerProfiles.ava;
+  const childRecognition = getRecognitionRecords().find((record) => record.playerId === activeChildId);
+  const workflow = [
+    ["Record", "live"], ["Upload", "matches"], ["Library", "matches"],
+    ["AI Analysis", role === "parent" ? "child-analysis" : role === "player" ? "player-development" : "analysis"],
+    ["Player Stats", individualMode ? "player-stats" : "team"], ["Highlights", "highlights"],
+    ["Coach Insights", individualMode ? "player-development" : "analysis"],
+    ["Drills", role === "coach" ? "drills" : individualMode ? "player-development" : "football-intelligence"],
+    ["Session", role === "coach" ? "session-builder" : individualMode ? "player-development" : "admin"],
+    ["Development", individualMode ? "player-development" : "team"],
+    ["Awards", individualMode ? "player-awards" : "club-awards"],
+  ];
 
   return (
     <div className="mv-dashboard">
@@ -14,6 +31,16 @@ export default function Dashboard({ role = "coach", user, onNavigate }) {
           <p>Your team, live match and AI intelligence are connected.</p>
         </div>
       </section>
+
+      {role === "parent" && <section className="parent-child-dashboard">
+        <header><div><span>MY CHILDREN</span><h2>How is my child progressing?</h2></div><div>{linkedChildren.map((linkedChild) => <button type="button" className={activeChildId === linkedChild.id ? "active" : ""} key={linkedChild.id} onClick={() => setActiveChildId(linkedChild.id)}>{linkedChild.name}<small>{linkedChild.team}</small></button>)}</div></header>
+        <div className="parent-child-summary"><article className="child-identity"><div>{child.initials}</div><span><strong>{child.name}</strong><small>{child.team} · #{child.number}</small></span><button type="button" onClick={() => onNavigate("player-profile")}>Open profile →</button></article>{child.stats.slice(0,3).map(([label,value]) => <article key={label}><strong>{value}</strong><span>{label}</span></article>)}</div>
+        {childRecognition && <section className="parent-recognition-summary"><img src={childRecognition.certificateImage} alt="Best On Field certificate" /><div><span>YOUR CHILD'S LATEST RECOGNITION</span><h3>🏆 {childRecognition.awardType} Award</h3><dl><div><dt>Player</dt><dd>{childRecognition.playerName}</dd></div><div><dt>Match</dt><dd>{childRecognition.match}</dd></div><div><dt>Coach</dt><dd>{childRecognition.coach}</dd></div></dl><div className="parent-recognition-actions"><button type="button" onClick={() => onNavigate("player-certificates")}>View Certificate</button>{childRecognition.reward && <button type="button" onClick={() => onNavigate("player-rewards")}>🎁 Reward Available · View Reward</button>}</div></div></section>}
+        <div className="parent-progress-grid"><article><span>LATEST HIGHLIGHT</span><strong>{child.highlights[0]}</strong><button type="button" onClick={() => onNavigate("highlights")}>Watch highlight →</button></article><article><span>LATEST AWARD</span><strong>{demoAwardHistory[0][0]}</strong><button type="button" onClick={() => onNavigate("player-awards")}>View award →</button></article><article><span>LATEST CERTIFICATE</span><strong>Best On Field · Issued</strong><button type="button" onClick={() => onNavigate("player-certificates")}>View certificate →</button></article><article><span>DEVELOPMENT FOCUS</span><strong>{child.focus}</strong><button type="button" onClick={() => onNavigate("player-development")}>View progress →</button></article><article><span>UPCOMING</span><strong>{child.nextEvent}</strong><button type="button" onClick={() => onNavigate("calendar")}>Open calendar →</button></article></div>
+        <div className="parent-ai-summary"><b>✦ AI</b><div><span>POSITIVE DEVELOPMENT INSIGHT</span><strong>{child.trend}</strong><p>{child.strengths[0]} is becoming a consistent strength. Keep encouraging the current development focus.</p></div><button type="button" onClick={() => onNavigate("child-analysis")}>View child insights →</button></div>
+      </section>}
+
+      <section className="mv-workflow-card"><header><div><span>MATCHVISION DEVELOPMENT LOOP</span><h2>From match day to player growth</h2></div><strong>ONE CONNECTED WORKFLOW</strong></header><div>{workflow.map(([label,target], index) => <button type="button" key={label} onClick={() => onNavigate(target)}><b>{String(index + 1).padStart(2,"0")}</b><span>{label}</span>{index < workflow.length - 1 && <i>→</i>}</button>)}</div></section>
 
       <section className="mv-live-hero">
         <div className="mv-live-status">

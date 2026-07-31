@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
 import Dashboard from "./pages/Dashboard";
 import LiveGame from "./pages/LiveGame";
@@ -11,10 +11,16 @@ import DrillExchange from "./pages/CoachHub/DrillExchange";
 import CoachProfiles from "./pages/CoachHub/CoachProfiles";
 import SessionBuilder from "./pages/CoachHub/SessionBuilder";
 import PlaceholderPage from "./pages/PlaceholderPage";
-import { MobileDrawer } from "./components/AppNavigation";
+import JoinSpringvale from "./pages/JoinSpringvale";
+import ClubHub from "./pages/ClubHub/ClubHub";
+import CommunityHub from "./pages/CommunityHub/CommunityHub";
+import PlayerProfile from "./pages/PlayerProfile";
+import AdminFoundationPage from "./pages/AdminFoundationPage";
+import PlayerRecognition, { AdminRewardsManagement } from "./pages/PlayerRecognition";
+import { MobileDrawer, NavigationItems } from "./components/AppNavigation";
 import springvaleLogo from "./assets/springvale-city-logo.png";
 
-const navigation = [
+const navigationCatalog = [
   {
     id: "dashboard",
     label: "Dashboard",
@@ -25,6 +31,12 @@ const navigation = [
     id: "live",
     label: "Live Game",
     icon: "◉",
+    roles: ["coach", "parent", "player", "admin"],
+  },
+  {
+    id: "join-springvale",
+    label: "Join Springvale",
+    icon: "⚽",
     roles: ["coach", "parent", "player", "admin"],
   },
   {
@@ -106,16 +118,47 @@ const navigation = [
     roles: ["coach", "admin"],
   },
   {
+    id: "club-hub-heading",
+    label: "Club Hub",
+    icon: "◆",
+    roles: ["coach", "parent", "player", "admin"],
+    heading: true,
+  },
+  { id: "club-home", label: "Club Hub Home", icon: "⌂", roles: ["coach", "parent", "player", "admin"], child: true },
+  { id: "club-pulse", label: "Club Pulse", icon: "↗", roles: ["coach", "parent", "player", "admin"], child: true },
+  { id: "club-news", label: "Club News", icon: "▤", roles: ["coach", "parent", "player", "admin"], child: true },
+  { id: "club-parent-welcome", label: "Parent Welcome", icon: "♥", roles: ["coach", "parent", "player", "admin"], child: true },
+  { id: "club-ground-map", label: "Ground Map", icon: "⌖", roles: ["coach", "parent", "player", "admin"], child: true },
+  { id: "club-player-journey", label: "Player Journey", icon: "⌁", roles: ["coach", "parent", "player", "admin"], child: true },
+  { id: "club-about", label: "About Our Club", icon: "⌂", roles: ["coach", "parent", "player", "admin"], child: true },
+  { id: "club-join", label: "Join Our Club", icon: "⚽", roles: ["coach", "parent", "player", "admin"], child: true },
+  { id: "club-values", label: "Club Values", icon: "♥", roles: ["coach", "parent", "player", "admin"], child: true },
+  { id: "club-hall-of-fame", label: "Hall of Fame", icon: "★", roles: ["coach", "parent", "player", "admin"], child: true },
+  { id: "club-awards", label: "Awards Centre", icon: "✦", roles: ["coach", "parent", "player", "admin"], child: true },
+  { id: "club-events", label: "Events", icon: "◫", roles: ["coach", "parent", "player", "admin"], child: true },
+  { id: "club-volunteers", label: "Volunteer Hub", icon: "♟", roles: ["coach", "parent", "player", "admin"], child: true },
+  { id: "club-sponsors", label: "Sponsor Hub", icon: "◇", roles: ["coach", "parent", "player", "admin"], child: true },
+  { id: "club-gallery", label: "Gallery", icon: "▧", roles: ["coach", "parent", "player", "admin"], child: true },
+  {
     id: "documents",
     label: "Documents",
     icon: "▧",
     roles: ["coach", "parent", "player", "admin"],
+    child: true,
+  },
+  {
+    id: "admin-hub-heading",
+    label: "Admin Hub",
+    icon: "⚙",
+    roles: ["admin"],
+    heading: true,
   },
   {
     id: "admin",
     label: "Club Admin",
     icon: "⚙",
     roles: ["admin"],
+    child: true,
   },
   {
     id: "football-intelligence",
@@ -124,7 +167,198 @@ const navigation = [
     roles: ["admin"],
     child: true,
   },
+  { id: "admin-settings", label: "Club Settings", icon: "⚙", roles: ["admin"], child: true },
+  { id: "admin-committee", label: "Committee", icon: "♟", roles: ["admin"], child: true },
+  { id: "admin-registrations", label: "Registrations", icon: "✓", roles: ["admin"], child: true },
+  { id: "admin-sponsors", label: "Sponsors", icon: "◇", roles: ["admin"], child: true },
+  { id: "admin-documents", label: "Documents", icon: "▧", roles: ["admin"], child: true },
+  { id: "admin-awards", label: "Awards", icon: "★", roles: ["admin"], child: true },
+  { id: "admin-volunteers", label: "Volunteers", icon: "♥", roles: ["admin"], child: true },
+  { id: "admin-equipment", label: "Equipment", icon: "◫", roles: ["admin"], child: true },
+  { id: "admin-ground-bookings", label: "Ground Bookings", icon: "⌂", roles: ["admin"], child: true },
+  { id: "admin-notifications", label: "Notifications", icon: "●", roles: ["admin"], child: true },
+  { id: "admin-permissions", label: "Permissions", icon: "◆", roles: ["admin"], child: true },
 ];
+
+const navigationById = Object.fromEntries(
+  navigationCatalog.filter((item) => !item.heading).map((item) => [item.id, item])
+);
+
+const additionalNavigationItems = {
+  "player-profile": { id: "player-profile", label: "Player Profile", icon: "●" },
+  "player-stats": { id: "player-stats", label: "My Stats", icon: "↗" },
+  "child-analysis": { id: "child-analysis", label: "AI Analysis", icon: "✦" },
+  "player-awards": { id: "player-awards", label: "My Awards", icon: "★" },
+  "player-certificates": { id: "player-certificates", label: "My Certificates", icon: "▧" },
+  "player-achievements": { id: "player-achievements", label: "My Achievements", icon: "◆" },
+  "player-development": { id: "player-development", label: "My Development", icon: "✦" },
+  "player-rewards": { id: "player-rewards", label: "My Rewards", icon: "♦" },
+  "coach-recognition": { id: "coach-recognition", label: "Player Recognition", icon: "★" },
+  "coach-recruitment": { id: "coach-recruitment", label: "Recruitment Resources", icon: "⚽" },
+  "club-canteen": { id: "club-canteen", label: "Match Day Canteen", icon: "●" },
+  "admin-rewards": { id: "admin-rewards", label: "Rewards Management", icon: "♦" },
+  "admin-recruitment": { id: "admin-recruitment", label: "Recruitment Management", icon: "⚽" },
+};
+
+function section(id, label, icon) {
+  return { id, label, icon, heading: true };
+}
+
+function link(id, label) {
+  const item = navigationById[id] || additionalNavigationItems[id];
+  return { ...item, label: label || item.label, child: true };
+}
+
+const navigationConfig = {
+  admin: [
+    link("dashboard"), link("messages"), link("calendar"),
+    section("football-hub-heading", "Football Hub", "◉"),
+    link("live"), link("matches"), link("analysis"), link("highlights"), link("football-intelligence", "Football Intelligence · Opponent Explorer"),
+    section("team-hub-heading", "Team Hub", "♟"),
+    link("team", "Team Overview"), link("attendance"),
+    section("club-hub-heading", "Club Hub", "◆"),
+    link("club-home"), link("club-pulse"), link("club-news"), link("club-parent-welcome"),
+    link("club-ground-map"), link("club-player-journey"), link("club-about"), link("club-join"), link("club-values"),
+    link("club-hall-of-fame"), link("club-awards"), link("club-events"), link("club-volunteers"),
+    link("club-sponsors"), link("club-gallery"), link("club-canteen"),
+    section("admin-hub-heading", "Admin Hub", "⚙"),
+    link("admin"), link("admin-settings"), link("admin-committee"),
+    link("admin-registrations"), link("admin-sponsors", "Sponsors Management"), link("admin-documents", "Documents Management"), link("admin-awards", "Awards Management"),
+    link("admin-rewards"), link("admin-recruitment"), link("admin-volunteers", "Volunteer Management"), link("admin-equipment", "Equipment Management"), link("admin-ground-bookings"),
+    link("admin-notifications", "Notifications"), link("admin-permissions"),
+  ],
+  coach: [
+    link("dashboard"), link("messages"), link("calendar"),
+    section("football-hub-heading", "Football Hub", "◉"),
+    link("live"), link("matches"), link("analysis", "AI Match Analysis"), link("highlights"), link("football-intelligence", "Football Intelligence · Opponent Explorer"),
+    section("team-hub-heading", "Team Hub", "♟"),
+    link("team", "Team Overview"), link("attendance"),
+    section("coach-hub-heading", "Coach Hub", "◈"),
+    link("drills"), link("coach-profiles"), link("session-builder"), link("equipment", "Equipment Planning"), link("coach-recognition"),
+    link("coach-recruitment"), link("club-sponsors", "Sponsor Resources"), link("documents", "Coach Documents"),
+    section("club-resources-heading", "Club Resources", "◆"),
+    link("club-home"), link("club-join", "Join Our Club"),
+    link("club-awards", "Awards Centre"), link("club-events"), link("club-gallery"), link("club-canteen"),
+  ],
+  parent: [
+    link("dashboard"), link("messages"), link("calendar"),
+    section("team-hub-heading", "Team Hub", "♟"),
+    link("team", "Team Overview"), link("live", "Live Team Game"),
+    section("player-hub-heading", "Player Hub", "♥"),
+    link("player-profile", "Linked Children"), link("player-stats", "Child Statistics"),
+    link("matches", "Child Match Videos"), link("highlights", "Child Highlights"), link("child-analysis", "Child AI Insights"),
+    link("player-development", "Development Updates"), link("club-player-journey", "Child Journey"),
+    link("player-awards", "Awards"), link("player-certificates", "Certificates"), link("player-rewards", "Rewards"), link("player-achievements", "Achievements"),
+    section("club-hub-heading", "Club Hub", "◆"),
+    link("club-parent-welcome"), link("club-events"), link("documents"), link("club-ground-map"),
+    link("club-values"), link("club-gallery"), link("club-canteen"),
+  ],
+  player: [
+    link("dashboard"), link("messages"), link("calendar"),
+    section("team-hub-heading", "Team Hub", "♟"),
+    link("team", "Team Overview"), link("live", "Live Team Game"),
+    section("player-hub-heading", "Player Hub", "⚽"),
+    link("player-profile", "My Profile"), link("player-stats"), link("matches", "My Match Videos"), link("highlights", "My Highlights"), link("player-development"),
+    link("club-player-journey", "My Journey"), link("player-awards"),
+    link("player-certificates"), link("player-rewards"), link("player-achievements"),
+    section("club-hub-heading", "Club Hub", "◆"),
+    link("club-events"), link("documents"), link("club-gallery"), link("club-values"), link("club-canteen"),
+  ],
+};
+
+const clubHubPages = ["club-about", "club-values", "club-hall-of-fame", "club-awards", "club-events", "club-volunteers", "club-sponsors", "club-gallery", "club-canteen", "coach-recruitment", "documents"];
+const communityHubPages = ["club-home", "club-pulse", "club-news", "club-parent-welcome", "club-ground-map", "club-player-journey"];
+const publicClubHubPages = new Set(["club-join", ...clubHubPages, ...communityHubPages]);
+const playerProfilePages = new Set(["player-profile", "player-stats", "player-development", "player-awards", "player-certificates", "player-rewards", "player-achievements"]);
+const adminHubPages = {
+  "admin-settings": "Club Settings", "admin-committee": "Committee", "admin-registrations": "Registrations",
+  "admin-sponsors": "Sponsors", "admin-documents": "Documents", "admin-awards": "Awards",
+  "admin-volunteers": "Volunteers", "admin-equipment": "Equipment", "admin-ground-bookings": "Ground Bookings",
+  "admin-notifications": "Notifications", "admin-permissions": "Permissions",
+};
+
+const adminClubTabRoutes = {
+  "admin-settings": "settings",
+  "admin-notifications": "settings",
+  "admin-permissions": "access",
+};
+
+const adminFoundationRoutes = new Set([
+  "admin-committee",
+  "admin-registrations",
+  "admin-sponsors",
+  "admin-volunteers",
+  "admin-ground-bookings",
+  "admin-recruitment",
+]);
+
+const adminHubRouteIds = new Set([
+  "admin",
+  "football-intelligence",
+  "admin-rewards",
+  "admin-recruitment",
+  ...Object.keys(adminHubPages),
+]);
+
+function ClubHubRoute({ page, onNavigate, role }) {
+  if (page === "club-join") {
+    return <JoinSpringvale onNavigate={onNavigate} />;
+  }
+
+  if (clubHubPages.includes(page)) {
+    if (page === "coach-recruitment" && !["coach", "admin"].includes(role)) return null;
+    return <ClubHub page={page} onNavigate={onNavigate} role={role} />;
+  }
+
+  if (communityHubPages.includes(page)) {
+    return <CommunityHub page={page} onNavigate={onNavigate} />;
+  }
+
+  return null;
+}
+
+function AdminHubRoute({ page, onNavigate, user }) {
+  if (page === "admin") {
+    return <AdminClub user={user} onNavigate={onNavigate} />;
+  }
+
+  if (page === "admin-rewards") {
+    return <AdminRewardsManagement />;
+  }
+
+  if (page === "football-intelligence") {
+    return <FootballIntelligence role="admin" onNavigate={onNavigate} />;
+  }
+
+  if (adminClubTabRoutes[page]) {
+    return (
+      <AdminClub
+        key={page}
+        user={user}
+        onNavigate={onNavigate}
+        initialTab={adminClubTabRoutes[page]}
+      />
+    );
+  }
+
+  if (adminFoundationRoutes.has(page)) {
+    return <AdminFoundationPage page={page} onNavigate={onNavigate} />;
+  }
+
+  if (page === "admin-documents") {
+    return <ClubHub page="documents" onNavigate={onNavigate} role="admin" />;
+  }
+
+  if (page === "admin-awards") {
+    return <ClubHub page="club-awards" onNavigate={onNavigate} role="admin" />;
+  }
+
+  if (page === "admin-equipment") {
+    return <Equipment role="admin" user={user} onNavigate={onNavigate} />;
+  }
+
+  return null;
+}
 
 const demoAccounts = [
   {
@@ -189,16 +423,15 @@ export default function App() {
   const [page, setPage] = useState("dashboard");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const visibleNavigation = useMemo(
-    () =>
-      sessionUser
-        ? navigation.filter((item) => item.roles.includes(sessionUser.role))
-        : [],
-    [sessionUser]
-  );
+  const visibleNavigation = sessionUser
+    ? navigationConfig[sessionUser.role]
+    : [];
 
   const currentPage =
-    navigation.find((item) => item.id === page) || navigation[0];
+    visibleNavigation.find((item) => item.id === page) ||
+    navigationById[page] ||
+    additionalNavigationItems[page] ||
+    navigationById.dashboard;
 
   useEffect(() => {
     if (!isMobileMenuOpen) return undefined;
@@ -289,33 +522,7 @@ export default function App() {
           </div>
         </div>
 
-        <nav className="sidebar-nav">
-          {visibleNavigation.map((item) =>
-            item.heading ? (
-              <div className="nav-section-label" key={item.id}>
-                <span className="nav-symbol">{item.icon}</span>
-                <span>{item.label}</span>
-              </div>
-            ) : (
-              <button
-                type="button"
-                key={item.id}
-                className={[
-                  "nav-item",
-                  page === item.id ? "active" : "",
-                  item.child ? "nav-child" : "",
-                ].join(" ")}
-                onClick={() => navigateTo(item.id)}
-              >
-                <span className="nav-symbol">{item.icon}</span>
-                <span>{item.label}</span>
-                {item.id === "messages" && (
-                  <b className="nav-count">3</b>
-                )}
-              </button>
-            )
-          )}
-        </nav>
+        <NavigationItems items={visibleNavigation} page={page} onNavigate={navigateTo} />
 
         <div className="sidebar-profile">
           <div className="profile-avatar">
@@ -378,6 +585,8 @@ export default function App() {
             <button
               className="notification-button"
               type="button"
+              aria-label={sessionUser.role === "admin" ? "Open notifications" : "Open messages"}
+              onClick={() => navigateTo(sessionUser.role === "admin" ? "admin-notifications" : "messages")}
             >
               ✉<b>3</b>
             </button>
@@ -397,6 +606,22 @@ export default function App() {
               user={sessionUser}
               onNavigate={navigateTo}
             />
+          )}
+
+          {page === "join-springvale" && (
+            <JoinSpringvale onNavigate={navigateTo} />
+          )}
+
+          {publicClubHubPages.has(page) && (
+            <ClubHubRoute key={page} page={page} onNavigate={navigateTo} role={sessionUser.role} />
+          )}
+
+          {playerProfilePages.has(page) && ["parent", "player"].includes(sessionUser.role) && (
+            <PlayerProfile page={page} role={sessionUser.role} user={sessionUser} onNavigate={navigateTo} />
+          )}
+
+          {page === "coach-recognition" && sessionUser.role === "coach" && (
+            <PlayerRecognition />
           )}
 
           {page === "live" && (
@@ -423,6 +648,19 @@ export default function App() {
               />
             )}
 
+          {page === "football-intelligence" && sessionUser.role === "coach" && (
+            <FootballIntelligence role="coach" onNavigate={navigateTo} />
+          )}
+
+          {page === "child-analysis" && sessionUser.role === "parent" && (
+            <PlaceholderPage
+              page="analysis"
+              userRole={sessionUser.role}
+              role={sessionUser.role}
+              user={sessionUser}
+            />
+          )}
+
           {page === "equipment" &&
             ["coach", "admin"].includes(sessionUser.role) && (
               <Equipment
@@ -447,28 +685,30 @@ export default function App() {
               <SessionBuilder />
             )}
 
-          {page === "admin" &&
-            sessionUser.role === "admin" && (
-              <AdminClub user={sessionUser} onNavigate={navigateTo} />
-            )}
-
-          {page === "football-intelligence" &&
-            sessionUser.role === "admin" && (
-              <FootballIntelligence onNavigate={navigateTo} />
-            )}
+          {sessionUser.role === "admin" && adminHubRouteIds.has(page) && (
+            <AdminHubRoute
+              page={page}
+              user={sessionUser}
+              onNavigate={navigateTo}
+            />
+          )}
 
           {![
             "dashboard",
+            "join-springvale",
+            ...publicClubHubPages,
+            ...playerProfilePages,
+            ...adminHubRouteIds,
             "live",
             "matches",
             "analysis",
+            "child-analysis",
             "equipment",
             "drills",
             "coach-profiles",
             "session-builder",
+            "coach-recognition",
             "equipment",
-            "admin",
-            "football-intelligence",
           ].includes(page) && (
             <PlaceholderPage
               page={page}

@@ -128,8 +128,8 @@ function Toggle({ checked, onChange, disabled }) {
   );
 }
 
-export default function AdminClub({ user, onNavigate }) {
-  const [tab, setTab] = useState("overview");
+export default function AdminClub({ user, onNavigate, initialTab = "overview" }) {
+  const [tab, setTab] = useState(initialTab);
   const [permissions, setPermissions] = useState(defaultPermissions);
   const [opponentSearch, setOpponentSearch] = useState("");
   const [locationSearch, setLocationSearch] = useState("");

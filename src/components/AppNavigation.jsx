@@ -1,16 +1,17 @@
 import springvaleLogo from "../assets/springvale-city-logo.png";
+import { useEffect, useState } from "react";
 
-function NavigationItems({ items, page, onNavigate, mobile = false }) {
-  return <nav className={mobile ? "mobile-drawer-nav" : "sidebar-nav"}>{items.map((item) => item.heading ? (
-    <div className={mobile ? "mobile-drawer-section" : "nav-section-label"} key={item.id}>
-      <span className={mobile ? "mobile-drawer-icon" : "nav-symbol"}>{item.icon}</span><span>{item.label}</span>
-    </div>
-  ) : (
-    <button type="button" key={item.id} className={[mobile ? "mobile-drawer-item" : "nav-item", page === item.id ? "active" : "", item.child ? (mobile ? "mobile-drawer-child" : "nav-child") : ""].join(" ")} onClick={() => onNavigate(item.id)}>
-      <span className={mobile ? "mobile-drawer-icon" : "nav-symbol"}>{item.icon}</span><span>{item.label}</span>
-      {item.id === "messages" && <b className={mobile ? "mobile-drawer-count" : "nav-count"}>3</b>}
-    </button>
-  ))}</nav>;
+export function NavigationItems({ items, page, onNavigate, mobile = false }) {
+  const groups = [];
+  let current = { heading: null, items: [] };
+  items.forEach((item) => { if (item.heading) { if (current.heading || current.items.length) groups.push(current); current = { heading: item, items: [] }; } else current.items.push(item); });
+  if (current.heading || current.items.length) groups.push(current);
+  const activeGroup = groups.find((group) => group.heading && group.items.some((item) => item.id === page));
+  const activeHeadingId = activeGroup?.heading.id;
+  const [expanded, setExpanded] = useState(activeHeadingId || groups.find((group) => group.heading)?.heading.id || null);
+  useEffect(() => { if (activeHeadingId) setExpanded(activeHeadingId); }, [activeHeadingId]);
+  const itemButton = (item) => <button type="button" key={item.id} className={[mobile ? "mobile-drawer-item" : "nav-item", page === item.id ? "active" : "", item.child ? (mobile ? "mobile-drawer-child" : "nav-child") : ""].join(" ")} onClick={() => onNavigate(item.id)}><span className={mobile ? "mobile-drawer-icon" : "nav-symbol"}>{item.icon}</span><span>{item.label}</span>{item.id === "messages" && <b className={mobile ? "mobile-drawer-count" : "nav-count"}>3</b>}</button>;
+  return <nav className={mobile ? "mobile-drawer-nav" : "sidebar-nav"}>{groups.map((group, index) => group.heading ? <div className="nav-hub" key={group.heading.id}><button type="button" className={mobile ? "mobile-drawer-section nav-section-toggle" : "nav-section-label nav-section-toggle"} aria-expanded={expanded === group.heading.id} onClick={() => setExpanded(expanded === group.heading.id ? null : group.heading.id)}><span className={mobile ? "mobile-drawer-icon" : "nav-symbol"}>{group.heading.icon}</span><span>{group.heading.label}</span><b>{expanded === group.heading.id ? "−" : "+"}</b></button><div className={`nav-hub-items${expanded === group.heading.id ? " expanded" : ""}`}>{group.items.map(itemButton)}</div></div> : <div className="nav-standalone" key={`standalone-${index}`}>{group.items.map(itemButton)}</div>)}</nav>;
 }
 
 function UserProfile({ user, mobile = false }) {

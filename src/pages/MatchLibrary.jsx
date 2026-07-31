@@ -29,6 +29,8 @@ const demoMatches = [
     status: "AI complete",
     visibility: "Linked players + coaching staff",
     highlights: 9,
+    approved: true,
+    playerIds: ["ava", "mia", "lily-chen"],
   },
   {
     id: 2,
@@ -37,6 +39,8 @@ const demoMatches = [
     status: "AI complete",
     visibility: "Linked players + coaching staff",
     highlights: 7,
+    approved: true,
+    playerIds: ["ava", "mia", "lily-chen"],
   },
   {
     id: 3,
@@ -45,6 +49,18 @@ const demoMatches = [
     status: "AI complete",
     visibility: "Coaches and administrators",
     highlights: 12,
+    approved: false,
+    playerIds: ["mia", "sophie"],
+  },
+  {
+    id: 4,
+    title: "Springvale 2–0 Bentleigh",
+    date: "5 July 2026",
+    status: "AI complete",
+    visibility: "Linked players + coaching staff",
+    highlights: 6,
+    approved: true,
+    playerIds: ["ava", "lily-chen"],
   },
 ];
 
@@ -184,6 +200,11 @@ export default function MatchLibrary({
 
   const defaultPlayer =
     permittedPlayers[0]?.id || "ava";
+
+  const permittedPlayerIds = new Set(permittedPlayers.map((player) => player.id));
+  const visibleMatches = isRestrictedProfile
+    ? demoMatches.filter((match) => match.approved && match.playerIds.some((id) => permittedPlayerIds.has(id)))
+    : demoMatches;
 
   const [file, setFile] = useState(null);
   const [videoUrl, setVideoUrl] = useState("");
@@ -423,10 +444,10 @@ export default function MatchLibrary({
         <section className="match-library-panel">
           <header>
             <h3>Match Library</h3>
-            <span>{demoMatches.length} games</span>
+            <span>{visibleMatches.length} games</span>
           </header>
 
-          {demoMatches.map((match) => (
+          {visibleMatches.map((match) => (
             <button key={match.id}>
               <span>▶</span>
               <div>
