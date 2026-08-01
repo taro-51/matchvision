@@ -102,7 +102,7 @@
 .drill-toolbar,
 .profile-toolbar {
   display: grid;
-  grid-template-columns: minmax(280px, 1.5fr) repeat(3, minmax(145px, 0.55fr)) auto;
+  grid-template-columns: minmax(250px, 1.4fr) repeat(5, minmax(128px, 0.5fr)) auto;
   gap: 9px;
   margin-top: 16px;
   padding: 14px;
@@ -1009,6 +1009,7 @@
   .upload-drill-modal footer button { width: 100%; }
   .coach-toast { right: 12px; bottom: 12px; left: 12px; text-align: center; }
 }
+.drill-actions { grid-template-columns: repeat(3, minmax(0,1fr)); }
 
 
 .ai-session-source {

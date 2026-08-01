@@ -18,6 +18,7 @@ import PlayerProfile from "./pages/PlayerProfile";
 import AdminFoundationPage from "./pages/AdminFoundationPage";
 import PlayerRecognition, { AdminRewardsManagement } from "./pages/PlayerRecognition";
 import { MobileDrawer, NavigationItems } from "./components/AppNavigation";
+import AIStudio from "./components/AIStudio";
 import springvaleLogo from "./assets/springvale-city-logo.png";
 
 const navigationCatalog = [
@@ -31,6 +32,12 @@ const navigationCatalog = [
     id: "live",
     label: "Live Game",
     icon: "◉",
+    roles: ["coach", "parent", "player", "admin"],
+  },
+  {
+    id: "ai-studio",
+    label: "MatchVision AI Studio",
+    icon: "AI",
     roles: ["coach", "parent", "player", "admin"],
   },
   {
@@ -209,9 +216,13 @@ function link(id, label) {
   return { ...item, label: label || item.label, child: true };
 }
 
-const navigationConfig = {
+function topLink(id, label) {
+  return { ...link(id, label), child: false };
+}
+
+const previousNavigationConfig = {
   admin: [
-    link("dashboard"), link("messages"), link("calendar"),
+    topLink("dashboard"), topLink("ai-studio"), topLink("messages"), topLink("calendar"),
     section("football-hub-heading", "Football Hub", "◉"),
     link("live"), link("matches"), link("analysis"), link("highlights"), link("football-intelligence", "Football Intelligence · Opponent Explorer"),
     section("team-hub-heading", "Team Hub", "♟"),
@@ -228,20 +239,20 @@ const navigationConfig = {
     link("admin-notifications", "Notifications"), link("admin-permissions"),
   ],
   coach: [
-    link("dashboard"), link("messages"), link("calendar"),
+    topLink("dashboard"), topLink("ai-studio"), topLink("messages"), topLink("calendar"),
     section("football-hub-heading", "Football Hub", "◉"),
     link("live"), link("matches"), link("analysis", "AI Match Analysis"), link("highlights"), link("football-intelligence", "Football Intelligence · Opponent Explorer"),
     section("team-hub-heading", "Team Hub", "♟"),
     link("team", "Team Overview"), link("attendance"),
     section("coach-hub-heading", "Coach Hub", "◈"),
     link("drills"), link("coach-profiles"), link("session-builder"), link("equipment", "Equipment Planning"), link("coach-recognition"),
-    link("coach-recruitment"), link("club-sponsors", "Sponsor Resources"), link("documents", "Coach Documents"),
+    link("documents", "Coach Documents"),
     section("club-resources-heading", "Club Resources", "◆"),
-    link("club-home"), link("club-join", "Join Our Club"),
+    link("club-home"), link("club-join", "Join Our Club"), link("coach-recruitment", "Recruitment Resources"), link("club-sponsors", "Sponsor Resources"),
     link("club-awards", "Awards Centre"), link("club-events"), link("club-gallery"), link("club-canteen"),
   ],
   parent: [
-    link("dashboard"), link("messages"), link("calendar"),
+    topLink("dashboard"), topLink("ai-studio"), topLink("messages"), topLink("calendar"),
     section("team-hub-heading", "Team Hub", "♟"),
     link("team", "Team Overview"), link("live", "Live Team Game"),
     section("player-hub-heading", "Player Hub", "♥"),
@@ -254,7 +265,7 @@ const navigationConfig = {
     link("club-values"), link("club-gallery"), link("club-canteen"),
   ],
   player: [
-    link("dashboard"), link("messages"), link("calendar"),
+    topLink("dashboard"), topLink("ai-studio"), topLink("messages"), topLink("calendar"),
     section("team-hub-heading", "Team Hub", "♟"),
     link("team", "Team Overview"), link("live", "Live Team Game"),
     section("player-hub-heading", "Player Hub", "⚽"),
@@ -265,6 +276,55 @@ const navigationConfig = {
     link("club-events"), link("documents"), link("club-gallery"), link("club-values"), link("club-canteen"),
   ],
 };
+
+// Sprint 4C keeps every route while presenting navigation around user purpose.
+// The previous configuration remains above as an audit reference during this migration.
+void previousNavigationConfig;
+const navigationConfig = {
+  admin: [
+    topLink("dashboard"), topLink("ai-studio"), topLink("messages"), topLink("calendar"),
+    section("football-hub-heading", "Football Hub", "FI"), link("football-intelligence", "Football Intelligence / Opponent Explorer"),
+    section("team-hub-heading", "Team Hub", "TM"), link("team", "Team Overview"), link("live"), link("attendance"),
+    section("club-hub-heading", "Club Hub", "CL"), link("club-home"), link("club-pulse"), link("club-news"), link("club-parent-welcome"), link("club-ground-map"), link("club-player-journey"), link("club-about"), link("club-join"), link("club-values"), link("club-hall-of-fame"), link("club-awards"), link("club-events"), link("club-volunteers"), link("club-sponsors"), link("club-gallery"), link("club-canteen"), link("documents", "Club Documents"),
+    section("admin-hub-heading", "Admin Hub", "AD"), link("admin"), link("admin-settings"), link("admin-committee"), link("admin-registrations"), link("admin-sponsors", "Sponsors Management"), link("admin-documents", "Documents Management"), link("admin-awards", "Awards Management"), link("admin-rewards"), link("admin-recruitment"), link("admin-volunteers", "Volunteer Management"), link("admin-equipment", "Equipment Management"), link("admin-ground-bookings"), link("admin-notifications"), link("admin-permissions"),
+  ],
+  coach: [
+    topLink("dashboard"), topLink("ai-studio"), topLink("messages"), topLink("calendar"),
+    section("football-hub-heading", "Football Hub", "FI"), link("football-intelligence", "Football Intelligence / Opponent Explorer"),
+    section("team-hub-heading", "Team Hub", "TM"), link("team", "Team Overview"), link("live"), link("attendance"),
+    section("coach-hub-heading", "Coach Hub", "CO"), link("drills"), link("coach-profiles"), link("session-builder"), link("equipment", "Equipment Planning"), link("coach-recognition"), link("documents", "Coach Documents"),
+    section("club-hub-heading", "Club Hub", "CL"), link("club-home"), link("club-join", "Join Our Club"), link("coach-recruitment", "Recruitment Resources"), link("club-sponsors", "Sponsor Resources"), link("club-awards", "Awards Centre"), link("club-events"), link("club-gallery"), link("club-canteen"),
+  ],
+  parent: [
+    topLink("dashboard"), topLink("ai-studio"), topLink("messages"), topLink("calendar"),
+    section("team-hub-heading", "Team Hub", "TM"), link("team", "Team Overview"), link("live", "Live Team Game"),
+    section("player-hub-heading", "Player Hub", "PL"), link("player-profile", "Linked Children"), link("player-stats", "Child Statistics"), link("player-development", "Development Updates"), link("club-player-journey", "Child Journey"), link("player-awards", "Awards"), link("player-certificates", "Certificates"), link("player-rewards", "Rewards"), link("player-achievements", "Achievements"),
+    section("club-hub-heading", "Club Hub", "CL"), link("club-parent-welcome"), link("club-events"), link("documents"), link("club-ground-map"), link("club-values"), link("club-gallery"), link("club-canteen"),
+  ],
+  player: [
+    topLink("dashboard"), topLink("ai-studio"), topLink("messages"), topLink("calendar"),
+    section("team-hub-heading", "Team Hub", "TM"), link("team", "Team Overview"), link("live", "Live Team Game"),
+    section("player-hub-heading", "Player Hub", "PL"), link("player-profile", "My Profile"), link("player-stats"), link("player-development"), link("club-player-journey", "My Journey"), link("player-awards"), link("player-certificates"), link("player-rewards"), link("player-achievements"),
+    section("club-hub-heading", "Club Hub", "CL"), link("club-events"), link("documents"), link("club-gallery"), link("club-values"), link("club-canteen"),
+  ],
+};
+
+const searchableResources = [
+  { id: "ai-studio", label: "Recent AI Uploads", icon: "AI", keywords: "analyses analysis history recent uploads processing queue completed reports discoveries", roles: ["admin","coach","parent","player"] },
+  { id: "analysis", label: "Latest AI Report", icon: "AI", keywords: "analysis report insight statistics", roles: ["admin","coach","player"] },
+  { id: "child-analysis", label: "Child AI Report", icon: "AI", keywords: "analysis report insight child", roles: ["parent"] },
+  { id: "highlights", label: "Recent Highlights", icon: "HL", keywords: "highlight clip video recent", roles: ["admin","coach","parent","player"] },
+  { id: "team", label: "Ava Thompson · Player", icon: "●", keywords: "player profile squad child", roles: ["admin","coach","parent","player"] },
+  { id: "matches", label: "Springvale vs Oakleigh · Match", icon: "▶", keywords: "match replay video recent", roles: ["admin","coach","parent","player"] },
+  { id: "documents", label: "Best On Field Certificate · Document", icon: "▧", keywords: "document certificate award download", roles: ["coach","parent","player"] },
+  { id: "admin-documents", label: "Best On Field Certificate · Document", icon: "▧", keywords: "document certificate award download", roles: ["admin"] },
+  { id: "player-awards", label: "Best On Field · Award", icon: "★", keywords: "award recognition certificate", roles: ["parent","player"] },
+  { id: "club-awards", label: "Best On Field · Awards Centre", icon: "★", keywords: "award recognition certificate", roles: ["admin","coach"] },
+  { id: "session-builder", label: "Defensive Transitions · Training", icon: "▤", keywords: "training session objective plan", roles: ["coach"] },
+  { id: "messages", label: "U11 Wallabies · Messages", icon: "✉", keywords: "message conversation family coach", roles: ["admin","coach","parent","player"] },
+  { id: "football-intelligence", label: "Oakleigh United · Opponent", icon: "◉", keywords: "opponent club scout tactical", roles: ["admin","coach"] },
+  { id: "team", label: "U11 Wallabies · Team", icon: "♟", keywords: "team squad fixtures statistics", roles: ["admin","coach","parent","player"] },
+];
 
 const clubHubPages = ["club-about", "club-values", "club-hall-of-fame", "club-awards", "club-events", "club-volunteers", "club-sponsors", "club-gallery", "club-canteen", "coach-recruitment", "documents"];
 const communityHubPages = ["club-home", "club-pulse", "club-news", "club-parent-welcome", "club-ground-map", "club-player-journey"];
@@ -422,6 +482,7 @@ export default function App() {
   const [sessionUser, setSessionUser] = useState(null);
   const [page, setPage] = useState("dashboard");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [globalSearch, setGlobalSearch] = useState("");
 
   const visibleNavigation = sessionUser
     ? navigationConfig[sessionUser.role]
@@ -432,6 +493,8 @@ export default function App() {
     navigationById[page] ||
     additionalNavigationItems[page] ||
     navigationById.dashboard;
+  const searchResults = globalSearch.trim() ? [...visibleNavigation.filter((item) => !item.heading), ...searchableResources.filter((item) => item.roles.includes(sessionUser.role))]
+    .filter((item, index, collection) => `${item.label} ${item.keywords || ""}`.toLowerCase().includes(globalSearch.trim().toLowerCase()) && collection.findIndex((candidate) => candidate.id === item.id && candidate.label === item.label) === index).slice(0, 8) : [];
 
   useEffect(() => {
     if (!isMobileMenuOpen) return undefined;
@@ -451,7 +514,12 @@ export default function App() {
 
   function navigateTo(nextPage) {
     setPage(nextPage);
+    setGlobalSearch("");
     setIsMobileMenuOpen(false);
+  }
+
+  function launchAIStudio() {
+    navigateTo("ai-studio");
   }
 
   function login(account) {
@@ -567,6 +635,8 @@ export default function App() {
             <label className="global-search">
               <span>⌕</span>
               <input
+                value={globalSearch}
+                onChange={(event) => setGlobalSearch(event.target.value)}
                 placeholder={
                   sessionUser.role === "parent"
                     ? "Search your children, matches and highlights..."
@@ -575,6 +645,15 @@ export default function App() {
                       : "Search players, matches, coaches and clubs..."
                 }
               />
+              {globalSearch.trim() && (
+                <div className="global-search-results" role="listbox" aria-label="Search results">
+                  {searchResults.length ? searchResults.map((item) => (
+                    <button type="button" key={item.id} onClick={() => navigateTo(item.id)}>
+                      <span>{item.icon}</span><strong>{item.label}</strong><small>Open →</small>
+                    </button>
+                  )) : <p>No accessible pages match “{globalSearch}”.</p>}
+                </div>
+              )}
             </label>
 
             <span className="live-demo-pill">
@@ -605,6 +684,7 @@ export default function App() {
               role={sessionUser.role}
               user={sessionUser}
               onNavigate={navigateTo}
+              onLaunchAIStudio={launchAIStudio}
             />
           )}
 
@@ -612,12 +692,16 @@ export default function App() {
             <JoinSpringvale onNavigate={navigateTo} />
           )}
 
+          {page === "ai-studio" && (
+            <AIStudio embedded role={sessionUser.role} user={sessionUser} onNavigate={navigateTo} />
+          )}
+
           {publicClubHubPages.has(page) && (
             <ClubHubRoute key={page} page={page} onNavigate={navigateTo} role={sessionUser.role} />
           )}
 
           {playerProfilePages.has(page) && ["parent", "player"].includes(sessionUser.role) && (
-            <PlayerProfile page={page} role={sessionUser.role} user={sessionUser} onNavigate={navigateTo} />
+            <PlayerProfile page={page} role={sessionUser.role} user={sessionUser} onNavigate={navigateTo} onLaunchAIStudio={launchAIStudio} />
           )}
 
           {page === "coach-recognition" && sessionUser.role === "coach" && (
@@ -628,6 +712,7 @@ export default function App() {
             <LiveGame
               role={sessionUser.role}
               user={sessionUser}
+              onLaunchAIStudio={launchAIStudio}
             />
           )}
 
@@ -636,15 +721,17 @@ export default function App() {
               role={sessionUser.role}
               user={sessionUser}
               onNavigate={navigateTo}
+              onLaunchAIStudio={launchAIStudio}
             />
           )}
 
           {page === "analysis" &&
-            ["coach", "admin"].includes(sessionUser.role) && (
+            ["coach", "admin", "player"].includes(sessionUser.role) && (
               <AIAnalysis
                 role={sessionUser.role}
                 user={sessionUser}
                 onNavigate={navigateTo}
+                onLaunchAIStudio={launchAIStudio}
               />
             )}
 
@@ -653,11 +740,11 @@ export default function App() {
           )}
 
           {page === "child-analysis" && sessionUser.role === "parent" && (
-            <PlaceholderPage
-              page="analysis"
-              userRole={sessionUser.role}
+            <AIAnalysis
               role={sessionUser.role}
               user={sessionUser}
+              onNavigate={navigateTo}
+              onLaunchAIStudio={launchAIStudio}
             />
           )}
 
@@ -695,6 +782,7 @@ export default function App() {
 
           {![
             "dashboard",
+            "ai-studio",
             "join-springvale",
             ...publicClubHubPages,
             ...playerProfilePages,
@@ -715,6 +803,7 @@ export default function App() {
               userRole={sessionUser.role}
               role={sessionUser.role}
               user={sessionUser}
+              onNavigate={navigateTo}
             />
           )}
         </div>

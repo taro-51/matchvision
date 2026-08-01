@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { navigation } from "../data/navigation";
+import { getIntelligence } from "../lib/intelligence";
 
 const initialPlayers = [
   { name: "Ava Thompson", number: 7, status: "Confirmed", rate: "96%" },
@@ -1075,8 +1076,11 @@ function getPlayerById(id) {
   return teamHubPlayers.find((player) => player.id === id) || teamHubPlayers[0];
 }
 
-function TeamHubPage({ role = "parent" }) {
+function TeamHubPage({ role = "parent", onNavigate }) {
   const setRole = () => {};
+  const intelligence = getIntelligence();
+  const familyMode = role === "parent" || role === "player";
+  const visibleChildren = role === "player" ? [parentChildren[0]] : parentChildren;
   const [selectedPlayer, setSelectedPlayer] = useState(teamHubPlayers[0]);
   const [selectedChildId, setSelectedChildId] = useState(parentChildren[0].playerId);
   const [activeTab, setActiveTab] = useState("Overview");
@@ -1097,6 +1101,11 @@ function TeamHubPage({ role = "parent" }) {
 
   return (
     <div style={styles.attendancePage}>
+      <section style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginBottom: "18px", padding: "16px", border: "1px solid #343b46", borderRadius: "14px", background: "#12171e" }}>
+        <div style={{ flex: "1 1 320px" }}><span style={styles.cardEyebrow}>MATCHVISION AI STUDIO</span><h3 style={{ margin: "6px 0" }}>Turn the next match into connected team intelligence.</h3></div>
+        <button type="button" style={styles.primaryButton} onClick={() => onNavigate?.("ai-studio")}>Analyse New Match</button>
+        <button type="button" style={styles.secondaryButton} onClick={() => onNavigate?.("ai-studio")}>Continue Analysis</button>
+      </section>
       <div style={styles.teamHubRoleBar}>
         <div>
           <span style={styles.cardEyebrow}>DEMO VIEW</span>
@@ -1134,7 +1143,12 @@ function TeamHubPage({ role = "parent" }) {
         </div>
       </div>
 
-      {role === "parent" ? (
+      <section style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: "16px", alignItems: "center", marginBottom: "16px", padding: "18px", border: "1px solid #303b47", borderRadius: "14px", background: "linear-gradient(135deg,#151d27,#10171f)" }}>
+        <div><span style={styles.cardEyebrow}>MATCHVISION AI · TEAM UPDATE</span><h3 style={styles.cardTitle}>{familyMode ? "Progress, availability and the next team moment" : `Prepare for ${intelligence.findings.priority.toLowerCase()}`}</h3><p style={{ margin: "7px 0 0", color: "#9aa6b3", lineHeight: 1.55 }}>{familyMode ? intelligence.player.parentSummary : `${intelligence.findings.teamCompactness} compactness was identified in the latest match. ${intelligence.recommendedSession.title} is ready for the coaching team.`}</p></div>
+        <button type="button" onClick={() => setActiveTab(familyMode ? "AI report" : "AI insights")} style={{ minHeight: "44px", padding: "10px 14px", border: "1px solid #d63a4e", borderRadius: "9px", color: "#fff", background: "#c62b3f" }}>Open team evidence →</button>
+      </section>
+
+      {familyMode ? (
         <>
           <div style={styles.teamHubParentHero}>
             <div>
@@ -1165,7 +1179,7 @@ function TeamHubPage({ role = "parent" }) {
             </div>
 
             <div style={styles.teamHubChildButtons}>
-              {parentChildren.map((child) => {
+              {visibleChildren.map((child) => {
                 const player = getPlayerById(child.playerId);
 
                 return (
@@ -2438,7 +2452,7 @@ function MatchAnalysisModal({ role, match, onClose, onToast }) {
   );
 }
 
-function ParentMatchAnalysis({ tab, match, onToast }) {
+function ParentMatchAnalysis({ tab, match: _match, onToast }) {
   if (tab === "Highlights") {
     return (
       <div style={styles.matchHighlightGrid}>
@@ -2577,7 +2591,7 @@ function ParentMatchAnalysis({ tab, match, onToast }) {
   );
 }
 
-function CoachMatchAnalysis({ tab, match, onToast }) {
+function CoachMatchAnalysis({ tab, match: _match, onToast }) {
   if (tab === "Players") {
     return (
       <div style={styles.matchCoachPlayerTable}>
@@ -3619,6 +3633,17 @@ const highlightItems = [
     description:
       "Five players combined from a ball recovery to a goal in under nine seconds.",
   },
+  {
+    id: 6,
+    title: "Lily's award moment",
+    player: "Lily Thompson",
+    match: "Springvale 2–0 Bentleigh",
+    time: "48:20",
+    type: "Award moment",
+    rating: 8.7,
+    emotion: "Proud moment",
+    description: "Lily’s calm defending and support for teammates earned recognition from her coach.",
+  },
 ];
 
 function HighlightsPage({ role = "parent" }) {
@@ -3626,10 +3651,17 @@ function HighlightsPage({ role = "parent" }) {
   const [activeType, setActiveType] = useState("All");
   const [selectedHighlight, setSelectedHighlight] = useState(null);
   const [toastText, setToastText] = useState("");
+  const [favourites, setFavourites] = useState([]);
+  let activePlayerName = "Ava Thompson";
+  try {
+    if (role === "parent" && localStorage.getItem("matchvisionActivePlayerId") === "lily-thompson") activePlayerName = "Lily Thompson";
+  } catch {
+    // Use the role-safe default player.
+  }
 
   const permittedHighlights = highlightItems.filter((highlight) => {
-    if (role === "parent") {
-      return highlight.player === "Ava Thompson";
+    if (role === "parent" || role === "player") {
+      return highlight.player === activePlayerName;
     }
 
     return true;
@@ -3690,10 +3722,12 @@ function HighlightsPage({ role = "parent" }) {
         <div>
           <strong>
             {role === "parent"
-              ? "You are viewing highlights linked to Ava Thompson"
-              : role === "coach"
-                ? "You are viewing highlights from the full U11 squad"
-                : "You are viewing collective highlights and data across all authorised games"}
+              ? `You are viewing highlights linked to ${activePlayerName}`
+              : role === "player"
+                ? `You are viewing only your approved ${activePlayerName} highlights`
+                : role === "coach"
+                  ? "You are viewing highlights from the full U11 squad"
+                  : "You are viewing collective highlights and data across all authorised games"}
           </strong>
           <p>
             MatchVision applies player consent, family links and club privacy
@@ -3708,7 +3742,7 @@ function HighlightsPage({ role = "parent" }) {
             {role === "admin" ? "Club highlights" : "Highlights ready"}
           </span>
           <strong style={styles.teamHubMetricValue}>
-            {role === "parent" ? "7" : role === "coach" ? "42" : "126"}
+            {role === "parent" || role === "player" ? visibleHighlights.length : role === "coach" ? "42" : "126"}
           </strong>
           <span style={styles.summaryFooter}>Across analysed match footage</span>
         </div>
@@ -3717,7 +3751,7 @@ function HighlightsPage({ role = "parent" }) {
             {role === "parent" ? "Positive moments" : "Goals detected"}
           </span>
           <strong style={styles.teamHubMetricValue}>
-            {role === "parent" ? "5" : role === "coach" ? "24" : "88"}
+            {role === "parent" || role === "player" ? visibleHighlights.filter((item) => ["Goal", "Assist", "Award moment"].includes(item.type)).length : role === "coach" ? "24" : "88"}
           </strong>
           <span style={styles.teamHubMetricPositive}>AI confirmed</span>
         </div>
@@ -3726,7 +3760,7 @@ function HighlightsPage({ role = "parent" }) {
             {role === "parent" ? "Development clips" : "Team patterns"}
           </span>
           <strong style={styles.teamHubMetricValue}>
-            {role === "parent" ? "2" : role === "coach" ? "13" : "37"}
+            {role === "parent" || role === "player" ? visibleHighlights.length : role === "coach" ? "13" : "37"}
           </strong>
           <span style={styles.summaryFooter}>Ready for review</span>
         </div>
@@ -3766,7 +3800,9 @@ function HighlightsPage({ role = "parent" }) {
               onChange={(event) => setSearch(event.target.value)}
               placeholder={
                 role === "parent"
-                  ? "Search Ava's match, skill, moment or time..."
+                  ? `Search ${activePlayerName.split(" ")[0]}'s match, skill, moment or time...`
+                  : role === "player"
+                    ? "Search my goals, assists, tackles or award moments..."
                   : role === "coach"
                     ? "Search player, match, skill, moment or time..."
                     : "Search team, player, match, skill, age group or time..."
@@ -3850,14 +3886,18 @@ function HighlightsPage({ role = "parent" }) {
               <button
                 type="button"
                 style={styles.secondaryButton}
-                onClick={() => showToast("Highlight added to a private reel")}
+                onClick={() => setFavourites((current) => current.includes(highlight.id) ? current.filter((id) => id !== highlight.id) : [...current, highlight.id])}
               >
-                Add to reel
+                {favourites.includes(highlight.id) ? "Favourite ✓" : "Favourite"}
               </button>
+              <button type="button" style={styles.secondaryButton} onClick={() => showToast("Secure sharing will be available in a future release")}>Share</button>
+              <button type="button" style={styles.secondaryButton} onClick={() => showToast("Download is disabled for this approved demo clip")}>Download</button>
             </div>
           </article>
         ))}
       </div>
+
+      {visibleHighlights.length === 0 && <section style={styles.teamHubFutureCard}><span style={styles.cardEyebrow}>NO APPROVED HIGHLIGHTS YET</span><h3>New moments will appear after club approval.</h3><p>MatchVision will notify this account when a linked clip becomes available.</p></section>}
 
       <div style={styles.highlightUniqueGrid}>
         <article style={styles.teamHubFutureCard}>
@@ -4764,7 +4804,7 @@ function LiveGameModal({ game, role, onClose, onToast }) {
   );
 }
 
-export default function PlaceholderPage({ page, userRole, role }) {
+export default function PlaceholderPage({ page, userRole, role, onNavigate }) {
   const [sessionUser, setSessionUser] = useState(() => {
     if (typeof window === "undefined") {
       return null;
@@ -4851,7 +4891,7 @@ export default function PlaceholderPage({ page, userRole, role }) {
   }
 
   if (page === "team") {
-    return <TeamHubPage role={loggedInRole} />;
+    return <TeamHubPage role={loggedInRole} onNavigate={onNavigate} />;
   }
 
   if (page === "matches") {
@@ -6091,7 +6131,7 @@ const styles = {
 
 
   teamHubRoleBar: {
-    display: "flex",
+    display: "none",
     justifyContent: "space-between",
     alignItems: "center",
     gap: "18px",
@@ -6953,13 +6993,6 @@ const styles = {
 
 
 
-  teamHubRoleBar: {
-    display: "none",
-  },
-
-  matchRoleBar: {
-    display: "none",
-  },
 
   messageHero: {
     display: "flex",

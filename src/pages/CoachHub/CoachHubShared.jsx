@@ -186,8 +186,11 @@ function DrillExchange() {
   const [coach, setCoach] = useState("All coaches");
   const [category, setCategory] = useState("All skills");
   const [visibility, setVisibility] = useState("All access");
+  const [ageGroup, setAgeGroup] = useState("All ages");
+  const [difficulty, setDifficulty] = useState("All difficulty");
   const [ratings, setRatings] = useState({});
   const [saved, setSaved] = useState([]);
+  const [recentlyUsed, setRecentlyUsed] = useState([]);
   const [selectedDrill, setSelectedDrill] = useState(null);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [toast, setToast] = useState("");
@@ -212,15 +215,18 @@ function DrillExchange() {
         category === "All skills" || drill.category === category;
       const matchesVisibility =
         visibility === "All access" || drill.visibility === visibility;
+      const matchesAge = ageGroup === "All ages" || drill.age.includes(ageGroup);
+      const drillDifficulty = drill.rating >= 4.7 ? "Advanced" : drill.rating >= 4.4 ? "Intermediate" : "Foundation";
+      const matchesDifficulty = difficulty === "All difficulty" || drillDifficulty === difficulty;
 
       return (
         matchesSearch &&
         matchesCoach &&
         matchesCategory &&
-        matchesVisibility
+        matchesVisibility && matchesAge && matchesDifficulty
       );
     });
-  }, [search, coach, category, visibility]);
+  }, [search, coach, category, visibility, ageGroup, difficulty]);
 
   function showToast(text) {
     setToast(text);
@@ -233,6 +239,16 @@ function DrillExchange() {
         ? current.filter((savedId) => savedId !== id)
         : [...current, id]
     );
+  }
+
+  function addToSession(drill) {
+    setRecentlyUsed((current) => [drill.id, ...current.filter((id) => id !== drill.id)].slice(0, 5));
+    try {
+      const current = JSON.parse(localStorage.getItem("matchvisionRecommendedSession") || "{}");
+      const selectedDrills = [...new Set([...(current.selectedDrills || []), drill.title])];
+      localStorage.setItem("matchvisionRecommendedSession", JSON.stringify({ ...current, title: current.title || "Drill Exchange session", selectedDrills }));
+    } catch { /* The demo still provides visible confirmation. */ }
+    showToast(`${drill.title} added to Session Builder`);
   }
 
   function saveUploadedDrill() {
@@ -342,6 +358,9 @@ function DrillExchange() {
           <option>Global</option>
         </select>
 
+        <select value={ageGroup} onChange={(event) => setAgeGroup(event.target.value)}><option>All ages</option><option>U8</option><option>U10</option><option>U11</option><option>U12</option><option>U13</option><option>U14</option><option>U16</option></select>
+        <select value={difficulty} onChange={(event) => setDifficulty(event.target.value)}><option>All difficulty</option><option>Foundation</option><option>Intermediate</option><option>Advanced</option></select>
+
         <button
           type="button"
           className="coach-primary-button"
@@ -391,6 +410,7 @@ function DrillExchange() {
                   {drill.age} · {drill.duration}
                 </span>
               </div>
+              {recentlyUsed.includes(drill.id) && <small className="ai-session-source">RECENTLY USED</small>}
 
               <h3>{drill.title}</h3>
               <button
@@ -452,15 +472,17 @@ function DrillExchange() {
                 <button
                   type="button"
                   className="coach-primary-button"
-                  onClick={() => showToast(`${drill.title} added to session`)}
+                  onClick={() => addToSession(drill)}
                 >
                   Add to session
                 </button>
+                <button type="button" className="coach-secondary-button" onClick={() => showToast(`${drill.title} coaching plan downloaded`)}>Download</button>
               </div>
             </div>
           </article>
         ))}
       </section>
+      {filteredDrills.length === 0 && <section className="session-empty"><h3>No drills match these filters.</h3><p>Adjust age, difficulty, category, coach or access level to see more ideas.</p><button type="button" className="coach-secondary-button" onClick={() => { setSearch(""); setCoach("All coaches"); setCategory("All skills"); setVisibility("All access"); setAgeGroup("All ages"); setDifficulty("All difficulty"); }}>Clear all filters</button></section>}
 
       {selectedDrill && (
         <div
@@ -527,9 +549,7 @@ function DrillExchange() {
                 <button
                   type="button"
                   className="coach-primary-button full-width"
-                  onClick={() =>
-                    showToast(`${selectedDrill.title} added to session`)
-                  }
+                  onClick={() => addToSession(selectedDrill)}
                 >
                   Add drill to session
                 </button>
@@ -886,7 +906,17 @@ function SessionBuilder() {
   const [generated, setGenerated] = useState(false);
   const [saved, setSaved] = useState(false);
   const [sourceMatch, setSourceMatch] = useState("");
+  const [trainingFocus, setTrainingFocus] = useState("");
   const [opponentDrills, setOpponentDrills] = useState([]);
+  const [coachNotes, setCoachNotes] = useState("");
+  const [sessionItems, setSessionItems] = useState([
+    { phase: "Warm Up", minutes: 10, title: "Arrival movement and reaction game" },
+    { phase: "Technical", minutes: 10, title: "Passing detail under pressure" },
+    { phase: "Tactical", minutes: 15, title: "Recovery defending and compact shape" },
+    { phase: "Small Sided Game", minutes: 10, title: "4v4 transition game" },
+    { phase: "Match Scenario", minutes: 10, title: "Conditioned match preparation" },
+    { phase: "Cool Down", minutes: 5, title: "Player review and recovery" },
+  ]);
   const [recommendedEquipment, setRecommendedEquipment] = useState([
     { id: "balls", name: "Size 4 footballs", required: 12 },
     { id: "cones", name: "Flat marker cones", required: 24 },
@@ -908,8 +938,12 @@ function SessionBuilder() {
         setDuration("70 minutes");
         setGenerated(true);
         setSourceMatch(recommendation.sourceMatch || "");
+        setObjective("Defending");
+        setTrainingFocus(recommendation.trainingFocus || recommendation.objective || "");
+        setCoachNotes(recommendation.coachNotes || "");
         if (Array.isArray(recommendation.selectedDrills)) setOpponentDrills(recommendation.selectedDrills);
         if (Array.isArray(recommendation.equipment)) setRecommendedEquipment(recommendation.equipment);
+        if (Array.isArray(recommendation.sections)) setSessionItems(recommendation.sections);
       }
     } catch {
       // Session Builder still works if storage is unavailable.
@@ -947,6 +981,7 @@ function SessionBuilder() {
             <div className="ai-session-source">
               <span>LOADED FROM AI ANALYSIS</span>
               <strong>{sourceMatch}</strong>
+              {trainingFocus && <p>{trainingFocus}</p>}
               {opponentDrills.length > 0 && <div>{opponentDrills.map((drill) => <small key={drill}>{drill}</small>)}</div>}
             </div>
           )}
@@ -1001,6 +1036,11 @@ function SessionBuilder() {
             </select>
           </label>
 
+          <label>
+            <span>Coach notes</span>
+            <textarea rows="4" value={coachNotes} onChange={(event) => setCoachNotes(event.target.value)} placeholder="Player reminders, tactical detail and session cues..." />
+          </label>
+
           <div className="ai-session-reason">
             <span>✦ AI REASONING</span>
             <p>
@@ -1048,49 +1088,14 @@ function SessionBuilder() {
               </div>
 
               <ol className="session-timeline">
-                <li>
-                  <strong>10 min</strong>
-                  <div>
-                    <h3>Arrival movement and reaction game</h3>
-                    <p>
-                      Dynamic movement, scanning and quick changes of direction.
-                    </p>
-                  </div>
-                  <button type="button">Edit</button>
-                </li>
-
-                <li>
-                  <strong>20 min</strong>
-                  <div>
-                    <h3>Recovery Defending: 2v1</h3>
-                    <p>
-                      Delay the attack, recover goal-side and communicate.
-                    </p>
-                  </div>
-                  <button type="button">Replace</button>
-                </li>
-
-                <li>
-                  <strong>20 min</strong>
-                  <div>
-                    <h3>Compact Shape: 4v4 + Targets</h3>
-                    <p>
-                      Maintain compactness and recognise pressing triggers.
-                    </p>
-                  </div>
-                  <button type="button">Replace</button>
-                </li>
-
-                <li>
-                  <strong>10 min</strong>
-                  <div>
-                    <h3>Conditioned match and player review</h3>
-                    <p>
-                      Reward recovery runs, communication and balanced shape.
-                    </p>
-                  </div>
-                  <button type="button">Edit</button>
-                </li>
+                {sessionItems.map((item, index) => <li key={`${item.phase}-${index}`}>
+                  <strong>{item.minutes} min</strong>
+                  <div><small>{item.phase.toUpperCase()}</small><h3>{item.title}</h3><p>{index === 5 ? "Review learning, recovery and player reminders." : "Editable coaching detail linked to the session objective."}</p></div>
+                  <button type="button" onClick={() => {
+                    const title = window.prompt(`Update ${item.phase}`, item.title);
+                    if (title?.trim()) setSessionItems((current) => current.map((entry, itemIndex) => itemIndex === index ? { ...entry, title: title.trim() } : entry));
+                  }}>Edit</button>
+                </li>)}
               </ol>
 
               <div className="session-equipment">
@@ -1103,7 +1108,7 @@ function SessionBuilder() {
                 className="coach-primary-button full-width"
                 onClick={() => {
                   try {
-                    localStorage.setItem("matchvisionSavedSession", JSON.stringify({ title: `${objective} · ${duration}`, objective, duration, playerCount, intensity, sourceMatch, selectedDrills: opponentDrills, equipment: recommendedEquipment }));
+                    localStorage.setItem("matchvisionSavedSession", JSON.stringify({ title: `${objective} · ${duration}`, objective, trainingFocus, duration, playerCount, intensity, coachNotes, sections: sessionItems, sourceMatch, selectedDrills: opponentDrills, equipment: recommendedEquipment }));
                     localStorage.setItem("matchvisionEquipmentRecommendation", JSON.stringify(recommendedEquipment));
                   } catch {}
                   setSaved(true);

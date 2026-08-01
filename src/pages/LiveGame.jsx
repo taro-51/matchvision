@@ -8,11 +8,12 @@ const games = [
   { id: 3, home: "U13 Boys", away: "Bentleigh Greens", score: "0–0", minute: "16:32", coach: "Alicia Tran", players: "Noah Martin, Liam Chen, Ethan Ferraro", venue: "Kingston Heath", pitch: "Pitch 1", time: "7:30 PM", viewers: 37 },
 ];
 
-export default function LiveGame({ role = "coach" }) {
+export default function LiveGame({ role = "coach", onLaunchAIStudio }) {
   const individualMode = role === "parent" || role === "player";
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All live games");
   const [selectedGame, setSelectedGame] = useState(games[0]);
+  const [playing, setPlaying] = useState(false);
 
   const visibleGames = useMemo(() => {
     const term = search.toLowerCase();
@@ -41,6 +42,7 @@ export default function LiveGame({ role = "coach" }) {
             <option>My linked players</option>
             <option>Ross Reserve</option>
           </select>
+          <button type="button" onClick={onLaunchAIStudio}>Send Recording to AI Studio</button>
         </div>
       </section>
 
@@ -60,7 +62,7 @@ export default function LiveGame({ role = "coach" }) {
           <div className="live-video">
             <div className="video-top"><span>LIVE</span><strong>{selectedGame.home} {selectedGame.score} {selectedGame.away}</strong><b>{selectedGame.minute}</b></div>
             <div className="video-score"><img src={springvaleLogo} alt="" /><strong>{selectedGame.score}</strong><div className="live-opponent">OU</div></div>
-            <button type="button">▶</button>
+            <button type="button" aria-pressed={playing} onClick={() => setPlaying((current) => !current)}>{playing ? "Ⅱ" : "▶"}</button>
             <small>{selectedGame.viewers} watching · Approved family stream</small>
           </div>
 

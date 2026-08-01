@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { demoAwardHistory, demoPlayerAwards, demoPlayerProfiles } from "../data/playerProfile";
 import { getRecognitionRecords } from "../data/recognition";
+import { getIntelligence } from "../lib/intelligence";
 import "./PlayerProfile.css";
 
 const profileTabs = [
@@ -14,7 +15,11 @@ function PerformanceView({ profile, onNavigate }) {
 }
 
 function DevelopmentView({ profile, role, onNavigate }) {
-  return <section className="player-development-view"><header><span>MY DEVELOPMENT</span><h2>{role === "parent" ? "Positive development insights" : "Your next step forward"}</h2><p>MatchVision combines match evidence with coach feedback to keep development clear, positive and practical.</p></header><div className="player-development-grid"><article><span>COACH FEEDBACK</span><h3>Growing confidence on the ball</h3><p>{profile.name} is scanning earlier, finding useful positions and consistently supporting teammates in transition.</p><strong>Lisa Pitsos · Head Coach</strong></article><article className="ai-development-card"><span>✦ MATCHVISION AI DEVELOPMENT</span><h3>{profile.trend}</h3><p>Strongest progress is visible in positioning and decision-making. The next useful focus is: {profile.focus.toLowerCase()}.</p><button type="button" onClick={() => onNavigate(role === "parent" ? "child-analysis" : "player-stats")}>Review supporting evidence →</button></article><article><span>STRENGTHS</span><ul>{profile.strengths.map((item) => <li key={item}>✓ {item}</li>)}</ul></article><article><span>DEVELOPMENT GOALS</span><ul>{profile.development.map((item) => <li key={item}>{item}</li>)}</ul></article></div></section>;
+  const intelligence = getIntelligence();
+  const [completedGoals, setCompletedGoals] = useState([]);
+  const goals = profile.id === intelligence.player.id ? intelligence.player.goals : profile.development;
+  const toggleGoal = (goal) => setCompletedGoals((current) => current.includes(goal) ? current.filter((item) => item !== goal) : [...current, goal]);
+  return <section className="player-development-view"><header><span>MY DEVELOPMENT</span><h2>{role === "parent" ? "Positive development insights" : "Your next step forward"}</h2><p>MatchVision combines match evidence with coach feedback to keep development clear, positive and practical.</p></header><div className="player-development-grid"><article><span>COACH FEEDBACK</span><h3>Growing confidence on the ball</h3><p>{profile.id === intelligence.player.id ? intelligence.player.coachFeedback : `${profile.name} is scanning earlier, finding useful positions and consistently supporting teammates.`}</p><strong>Lisa Pitsos · Head Coach</strong></article><article className="ai-development-card"><span>✦ MATCHVISION AI DEVELOPMENT</span><h3>{profile.trend}</h3><p>{role === "parent" ? intelligence.player.parentSummary : intelligence.player.summary}</p><button type="button" onClick={() => onNavigate(role === "parent" ? "child-analysis" : "analysis")}>Review supporting evidence →</button></article><article><span>STRENGTHS</span><ul>{profile.strengths.map((item) => <li key={item}>✓ {item}</li>)}</ul></article><article><span>DEVELOPMENT GOALS · {intelligence.player.progress}%</span><div className="player-goal-list">{goals.map((goal) => <button type="button" className={completedGoals.includes(goal) ? "complete" : ""} key={goal} onClick={() => toggleGoal(goal)}><i>{completedGoals.includes(goal) ? "✓" : "○"}</i><span>{goal}</span></button>)}</div></article></div></section>;
 }
 
 function RecognitionView({ profile, page }) {
@@ -27,14 +32,16 @@ function RecognitionView({ profile, page }) {
   return <section className="player-awards-section"><header><div><span>MY RECOGNITION · {section}</span><h2>{page === "player-certificates" ? "Certificate collection" : page === "player-achievements" ? "Football achievements" : "Awards history"}</h2></div><b>{records.length || 1} recognition</b></header>{page !== "player-achievements" && <article className="latest-player-award"><img src={award.certificateImage} alt="Springvale City Best On Field certificate" /><div><span>🏆 {award.awardType.toUpperCase()} AWARD</span><h2>{profile.name}</h2><p>{award.comments || "Presented for outstanding performance, positive attitude and commitment to the team."}</p><dl><div><dt>Award date</dt><dd>{award.dateAwarded}</dd></div><div><dt>Match</dt><dd>{award.match}</dd></div><div><dt>Coach</dt><dd>{award.coach}</dd></div><div><dt>Reward status</dt><dd>{award.reward ? `${award.reward.status} · ${award.reward.value}` : "No reward attached"}</dd></div></dl><small>Certificate attached · Recognition history active</small></div></article>}<div className="award-history-grid">{records.length ? records.map((record) => <article key={record.id}><i>★</i><div><strong>{record.awardType}</strong><span>{record.dateAwarded} · {record.match}</span></div><b>Earned</b></article>) : demoAwardHistory.map(([name,date,status]) => <article className={status === "Locked" ? "locked" : ""} key={name}><i>{status === "Locked" ? "◇" : "★"}</i><div><strong>{name}</strong><span>{date}</span></div><b>{status}</b></article>)}</div></section>;
 }
 
-export default function PlayerProfile({ page, role, user, onNavigate }) {
+export default function PlayerProfile({ page, role, user, onNavigate, onLaunchAIStudio }) {
   const linked = role === "parent" ? user.linkedChildren || [] : [user.playerProfile || { id: "ava" }];
-  const [activeId, setActiveId] = useState(linked[0]?.id || "ava");
+  let storedId = linked[0]?.id || "ava";
+  try { storedId = localStorage.getItem("matchvisionActivePlayerId") || storedId; } catch { /* Use the linked profile default. */ }
+  const [activeId, setActiveId] = useState(linked.some((item) => item.id === storedId) ? storedId : linked[0]?.id || "ava");
   const profile = demoPlayerProfiles[activeId] || demoPlayerProfiles.ava;
   const showOverview = page === "player-profile";
   return <div className="player-profile-page">
-    {role === "parent" && <div className="family-profile-switcher"><div><span>MY FAMILY</span><strong>Choose linked child</strong></div>{linked.map((child) => <button type="button" className={activeId === child.id ? "active" : ""} key={child.id} onClick={() => setActiveId(child.id)}>{child.name}<small>{child.team}</small></button>)}</div>}
-    <header className="player-profile-hero"><div className="player-profile-avatar">{profile.initials}</div><div><span>{role === "parent" ? "ACTIVE CHILD PROFILE" : "MY PLAYER PROFILE"}</span><h1>{profile.name}</h1><p>{profile.team} · #{profile.number} · {profile.position}</p></div><div className="player-profile-status"><i /> Active player</div></header>
+    {role === "parent" && <div className="family-profile-switcher"><div><span>MY FAMILY</span><strong>Choose linked child</strong></div>{linked.map((child) => <button type="button" className={activeId === child.id ? "active" : ""} key={child.id} onClick={() => { setActiveId(child.id); try { localStorage.setItem("matchvisionActivePlayerId", child.id); } catch { /* Profile selection remains active in memory. */ } }}>{child.name}<small>{child.team}</small></button>)}</div>}
+    <header className="player-profile-hero"><div className="player-profile-avatar">{profile.initials}</div><div><span>{role === "parent" ? "ACTIVE CHILD PROFILE" : "MY PLAYER PROFILE"}</span><h1>{profile.name}</h1><p>{profile.team} · #{profile.number} · {profile.position}</p></div><div className="player-profile-status"><i /> Active player</div><button type="button" className="profile-ai-studio-button" onClick={onLaunchAIStudio}>Analyse Latest Match</button></header>
     <nav className="player-profile-tabs">{profileTabs.map(([id,label]) => <button type="button" className={page === id ? "active" : ""} key={id} onClick={() => onNavigate(id)}>{label}</button>)}</nav>
     {showOverview && <><PerformanceView profile={profile} onNavigate={onNavigate} /><DevelopmentView profile={profile} role={role} onNavigate={onNavigate} /></>}
     {page === "player-stats" && <PerformanceView profile={profile} onNavigate={onNavigate} />}

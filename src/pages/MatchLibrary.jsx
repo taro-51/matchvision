@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import "./MatchLibrary.css";
+import { saveIntelligence } from "../lib/intelligence";
 
 const skills = [
   "All analytics",
@@ -30,7 +31,7 @@ const demoMatches = [
     visibility: "Linked players + coaching staff",
     highlights: 9,
     approved: true,
-    playerIds: ["ava", "mia", "lily-chen"],
+    playerIds: ["ava", "mia", "lily-chen", "lily-thompson"],
   },
   {
     id: 2,
@@ -40,7 +41,7 @@ const demoMatches = [
     visibility: "Linked players + coaching staff",
     highlights: 7,
     approved: true,
-    playerIds: ["ava", "mia", "lily-chen"],
+    playerIds: ["ava", "mia", "lily-chen", "lily-thompson"],
   },
   {
     id: 3,
@@ -144,6 +145,11 @@ const playerAnalytics = {
     ["Sprint count", "2"],
     ["AI rating", "8.1"],
   ],
+  "lily-thompson": [
+    ["Goals", "0"], ["Assists", "1"], ["Passes", "22 / 28"], ["Pass accuracy", "79%"],
+    ["Chances created", "2"], ["Defensive actions", "9"], ["Ball recoveries", "8"], ["Touches", "39"],
+    ["Distance covered", "5.1 km"], ["Sprint count", "8"], ["AI rating", "8.1"],
+  ],
 };
 
 const analysisStages = [
@@ -163,15 +169,18 @@ export default function MatchLibrary({
   role = "coach",
   user,
   onNavigate,
+  onLaunchAIStudio,
 }) {
   const fileRef = useRef(null);
 
   const canUpload = ["coach", "admin"].includes(role);
   const isRestrictedProfile = ["parent", "player"].includes(role);
 
+  let linkedPlayerContext = null;
+  try { linkedPlayerContext = localStorage.getItem("matchvisionActivePlayerId"); } catch { /* Use all linked children when no selection is stored. */ }
   const parentPlayers =
     role === "parent"
-      ? (user?.linkedChildren || []).map((child) => ({
+      ? (user?.linkedChildren || []).filter((child) => !linkedPlayerContext || child.id === linkedPlayerContext).map((child) => ({
           id: child.id,
           name: child.name,
           number: child.number,
@@ -198,13 +207,18 @@ export default function MatchLibrary({
         ? playerOnly
         : allPlayers;
 
-  const defaultPlayer =
-    permittedPlayers[0]?.id || "ava";
+  let storedPlayerId = permittedPlayers[0]?.id || "ava";
+  try { storedPlayerId = localStorage.getItem("matchvisionActivePlayerId") || storedPlayerId; } catch { /* Use the role-safe default. */ }
+  const defaultPlayer = permittedPlayers.some((player) => player.id === storedPlayerId) ? storedPlayerId : permittedPlayers[0]?.id || "ava";
 
+  const [studioMatches] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("matchvisionAIStudioMatches") || "[]"); } catch { return []; }
+  });
+  const allMatchRecords = [...studioMatches, ...demoMatches];
   const permittedPlayerIds = new Set(permittedPlayers.map((player) => player.id));
-  const visibleMatches = isRestrictedProfile
-    ? demoMatches.filter((match) => match.approved && match.playerIds.some((id) => permittedPlayerIds.has(id)))
-    : demoMatches;
+  const permittedMatches = isRestrictedProfile
+    ? allMatchRecords.filter((match) => match.approved && match.playerIds.some((id) => permittedPlayerIds.has(id)))
+    : allMatchRecords;
 
   const [file, setFile] = useState(null);
   const [videoUrl, setVideoUrl] = useState("");
@@ -224,6 +238,12 @@ export default function MatchLibrary({
   const [toast, setToast] = useState("");
   const [demoRecognised, setDemoRecognised] =
     useState(false);
+  const [deletedMatchIds, setDeletedMatchIds] = useState([]);
+  const [taggedMatchIds, setTaggedMatchIds] = useState([]);
+  const [matchTitles, setMatchTitles] = useState({});
+  const visibleMatches = permittedMatches.filter((match) => !deletedMatchIds.includes(match.id));
+  const [selectedMatchId, setSelectedMatchId] = useState(permittedMatches[0]?.id || null);
+  const selectedMatchRecord = visibleMatches.find((match) => match.id === selectedMatchId) || visibleMatches[0];
 
   const filteredAnalytics = useMemo(() => {
     const rows =
@@ -323,10 +343,7 @@ export default function MatchLibrary({
     };
 
     try {
-      window.localStorage.setItem(
-        "matchvisionLatestAnalysis",
-        JSON.stringify(analysis)
-      );
+      saveIntelligence(analysis);
       window.localStorage.setItem(
         "matchvisionDemoVideoName",
         analysis.sourceFile
@@ -393,8 +410,8 @@ export default function MatchLibrary({
             {canUpload
               ? "Upload the game. MatchVision turns it into the next coaching decision."
               : role === "parent"
-                ? "Your children’s approved match reports."
-                : "Your private player match profile."}
+                ? "My Child’s Football Library"
+                : "My Football Library"}
           </h2>
           <p>
             {canUpload
@@ -403,24 +420,13 @@ export default function MatchLibrary({
           </p>
         </div>
 
-        {canUpload && (
-          <div>
-            <button
-              className="match-primary"
-              type="button"
-              onClick={() => setUploadOpen(true)}
-            >
-              ＋ Upload Match
-            </button>
-            <button
-              type="button"
-              onClick={runAnalysis}
-            >
-              ✦ AI Analyse
-            </button>
-          </div>
-        )}
+        <div>
+          <button className="match-primary" type="button" onClick={onLaunchAIStudio}>Analyse New Match</button>
+          <button type="button" onClick={onLaunchAIStudio}>Continue Previous Analysis</button>
+        </div>
       </section>
+
+      {isRestrictedProfile && <section className="match-personal-summary"><div><span>{role === "parent" ? "SELECTED CHILD" : "PLAYER"}</span><h3>{selectedPlayerData?.name || permittedPlayers[0]?.name}</h3><p>Approved matches, replays, clips, highlights and personal AI summaries only.</p></div><button type="button" onClick={() => onNavigate(role === "parent" ? "child-analysis" : "analysis")}>Open Personal AI Review →</button><button type="button" onClick={() => onNavigate("highlights")}>View Approved Highlights →</button></section>}
 
       <section className="match-permission">
         <strong>
@@ -448,10 +454,10 @@ export default function MatchLibrary({
           </header>
 
           {visibleMatches.map((match) => (
-            <button key={match.id}>
+            <button key={match.id} className={selectedMatchId === match.id ? "active" : ""} onClick={() => { setSelectedMatchId(match.id); showToast(`${match.title} opened`); }}>
               <span>▶</span>
               <div>
-                <strong>{match.title}</strong>
+                <strong>{matchTitles[match.id] || match.title}</strong>
                 <small>{match.date}</small>
                 <small>{match.visibility}</small>
               </div>
@@ -534,6 +540,8 @@ export default function MatchLibrary({
           )}
         </section>
       </div>
+
+      {canUpload && selectedMatchRecord && <section className="match-management"><div><span>COACH & ADMIN MATCH CONTROLS</span><h3>{matchTitles[selectedMatchRecord.id] || selectedMatchRecord.title}</h3><p>Manage metadata and continue into the existing analysis workflow.</p></div><div><button type="button" onClick={() => { const title = window.prompt("Edit match title", matchTitles[selectedMatchRecord.id] || selectedMatchRecord.title); if (title?.trim()) { setMatchTitles((current) => ({ ...current, [selectedMatchRecord.id]: title.trim() })); showToast("Match details updated"); } }}>Edit</button><button type="button" className={taggedMatchIds.includes(selectedMatchRecord.id) ? "active" : ""} onClick={() => { setTaggedMatchIds((current) => current.includes(selectedMatchRecord.id) ? current.filter((id) => id !== selectedMatchRecord.id) : [...current, selectedMatchRecord.id]); showToast("Match tag updated"); }}>{taggedMatchIds.includes(selectedMatchRecord.id) ? "Tagged ✓" : "Tag Match"}</button><button type="button" onClick={() => onNavigate("highlights")}>Highlights</button><button type="button" onClick={() => onNavigate("team")}>Team Statistics</button><button type="button" className="danger" onClick={() => { if (window.confirm("Remove this match from the demonstration library?")) { setDeletedMatchIds((current) => [...current, selectedMatchRecord.id]); setSelectedMatchId(visibleMatches.find((match) => match.id !== selectedMatchRecord.id)?.id || null); showToast("Match removed from the library"); } }}>Delete</button></div></section>}
 
       <section className="analytics-search-panel">
         <div>

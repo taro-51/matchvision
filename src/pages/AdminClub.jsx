@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import "./AdminClub.css";
+import { getIntelligence } from "../lib/intelligence";
 
 const teams = [
   { id: "u8", team: "U8 Wallabies", coach: "Daniel Kim", players: 16, attendance: 91, wins: 8, draws: 2, losses: 2, goalsFor: 36, goalsAgainst: 17, development: 84, wellbeing: 92, retentionRisk: 1 },
@@ -128,7 +129,8 @@ function Toggle({ checked, onChange, disabled }) {
   );
 }
 
-export default function AdminClub({ user, onNavigate, initialTab = "overview" }) {
+export default function AdminClub({ user: _user, onNavigate, initialTab = "overview" }) {
+  const intelligence = getIntelligence();
   const [tab, setTab] = useState(initialTab);
   const [permissions, setPermissions] = useState(defaultPermissions);
   const [opponentSearch, setOpponentSearch] = useState("");
@@ -281,11 +283,11 @@ export default function AdminClub({ user, onNavigate, initialTab = "overview" })
             <section className="admin-ai-brief">
               <div className="admin-ai-icon">AI</div>
               <div>
-                <span>MATCHVISION CLUB PULSE · UNIQUE CLUB-WIDE AI</span>
-                <h3>Springvale City is improving, but one age-band requires intervention.</h3>
+                <span>MATCHVISION CLUB PULSE · {intelligence.club.analysedMatches} ANALYSED MATCHES</span>
+                <h3>Springvale City development is {intelligence.club.developmentTrend}; one age-band still requires intervention.</h3>
                 <p>
-                  The club’s strongest combined indicators are U11 performance, member wellbeing
-                  and equipment readiness. U13 attendance has fallen for four consecutive weeks
+                  The latest match added {intelligence.findings.priority.toLowerCase()} to the club-wide coaching priority. The club’s strongest combined indicators are U11 performance, member wellbeing
+                  and {intelligence.club.equipmentReadiness} equipment readiness. U13 attendance has fallen for four consecutive weeks
                   and now correlates with five elevated retention-risk profiles. MatchVision
                   recommends a coach check-in, parent pulse survey and revised Thursday session time.
                 </p>
@@ -685,10 +687,10 @@ export default function AdminClub({ user, onNavigate, initialTab = "overview" })
             <section className="admin-panel">
               <header><div><span>SAFEGUARDING CONTROL CENTRE</span><h3>Restricted items</h3></div><button onClick={() => showToast("New restricted incident form opened")}>＋ Record incident</button></header>
               <div className="governance-list">
-                <article><i className="amber" /><div><strong>2 wellbeing items awaiting review</strong><p>Visible only to named safeguarding administrators.</p></div><button>Review</button></article>
-                <article><i /><div><strong>All WWCC records current</strong><p>Next expiry in 42 days.</p></div><button>Open register</button></article>
-                <article><i /><div><strong>Video consent complete for 146 / 149 players</strong><p>Three accounts remain excluded from raw footage.</p></div><button>Contact families</button></article>
-                <article><i /><div><strong>Emergency contact test complete</strong><p>97% confirmed within the last six months.</p></div><button>View gaps</button></article>
+                <article><i className="amber" /><div><strong>2 wellbeing items awaiting review</strong><p>Visible only to named safeguarding administrators.</p></div><button onClick={() => showToast("Restricted wellbeing review opened")}>Review</button></article>
+                <article><i /><div><strong>All WWCC records current</strong><p>Next expiry in 42 days.</p></div><button onClick={() => showToast("WWCC compliance register opened")}>Open register</button></article>
+                <article><i /><div><strong>Video consent complete for 146 / 149 players</strong><p>Three accounts remain excluded from raw footage.</p></div><button onClick={() => showToast("Consent reminder prepared for three families")}>Contact families</button></article>
+                <article><i /><div><strong>Emergency contact test complete</strong><p>97% confirmed within the last six months.</p></div><button onClick={() => showToast("Emergency contact gaps opened")}>View gaps</button></article>
               </div>
             </section>
             <section className="admin-panel">

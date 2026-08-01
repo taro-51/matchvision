@@ -1,140 +1,130 @@
 import { useState } from "react";
 import "./Dashboard.css";
 import springvaleLogo from "../assets/springvale-city-logo.png";
-import { demoAwardHistory, demoPlayerProfiles } from "../data/playerProfile";
+import { demoPlayerProfiles } from "../data/playerProfile";
 import { getRecognitionRecords } from "../data/recognition";
+import { getIntelligence } from "../lib/intelligence";
 
-export default function Dashboard({ role = "coach", user, onNavigate }) {
-  const individualMode = role === "parent" || role === "player";
-  const firstName = user?.name?.split(" ")[0] || "Lisa";
+const workflow = [
+  ["Live Game", "live"], ["Match Library", "matches"], ["AI Analysis", "analysis"],
+  ["Football Intelligence", "football-intelligence"], ["Opponent Explorer", "football-intelligence"],
+  ["Match Preparation", "football-intelligence"], ["Recommended Drills", "drills"],
+  ["Session Builder", "session-builder"], ["Equipment", "equipment"], ["Training Session", "calendar"], ["Player Development", "player-development"],
+  ["Recognition", "coach-recognition"], ["Parent Feedback", "messages"], ["Club Insights", "club-pulse"],
+];
+
+const roleCopy = {
+  coach: ["How is my team progressing?", "Prepare the team for today’s session and the next opponent."],
+  parent: ["How is my child progressing?", "A clear, positive update from the latest approved match and coach feedback."],
+  player: ["What should I focus on this week?", "Your latest match, coach feedback and development goal in one place."],
+  admin: ["What does the club need attention on today?", "Football, people and operations combined into one club-wide priority."],
+};
+
+function MatchCentre({ role, child, intelligence, onNavigate }) {
+  const [mode, setMode] = useState("live");
+  const familyMode = role === "parent" || role === "player";
+  const content = {
+    live: { eyebrow: "LIVE · 42:17", title: "U11 Wallabies vs Oakleigh United", score: "2 – 1", detail: "Ross Reserve · Pitch 1", action: "Watch Live", target: "live" },
+    next: { eyebrow: "NEXT MATCH · SATURDAY 10:30 AM", title: "U11 Wallabies vs Bentleigh Greens", score: "2d 14h", detail: "Ross Reserve · Pitch 1 · Lineup availability 16/18", action: "Open Calendar", target: "calendar" },
+    recent: { eyebrow: "MOST RECENT · FINAL", title: `${intelligence.match.home} vs ${intelligence.match.away}`, score: intelligence.match.score, detail: `${intelligence.match.venue} · AI analysis complete`, action: "Open Match", target: "matches" },
+  }[mode];
+  return <section className="premium-match-centre">
+    <header><div><span>MATCH CENTRE</span><h2>One match. Everything you need.</h2></div><nav>{[["live","Live"],["next","Next"],["recent","Recent"]].map(([id,label]) => <button type="button" className={mode === id ? "active" : ""} key={id} onClick={() => setMode(id)}>{label}</button>)}</nav></header>
+    <div className="match-centre-stage">
+      <div className="match-centre-team"><img src={springvaleLogo} alt="Springvale City Soccer Club" /><strong>SPRINGVALE CITY</strong><small>U11 WALLABIES</small></div>
+      <div className="match-centre-score"><span>{content.eyebrow}</span><h1>{content.title}</h1><strong>{content.score}</strong><p>{content.detail}</p></div>
+      <div className="match-centre-opponent"><div>OU</div><strong>OAKLEIGH</strong><small>UNITED</small></div>
+    </div>
+    <div className="match-centre-events">
+      {familyMode ? <><article><b>31′</b><span>{child.name} created a chance with a positive forward pass.</span></article><article><b>36′</b><span>Strong recovery run supported the team.</span></article><article><b>AI</b><span>{intelligence.player.parentSummary}</span></article></> : <><article><b>31′</b><span>Right-side combination created a clear chance.</span></article><article><b>36′</b><span>Recovery time improved to {intelligence.findings.recoveryTime}.</span></article><article><b>AI</b><span>Priority: {intelligence.findings.priority}.</span></article></>}
+    </div>
+    <footer><button type="button" className="primary" onClick={() => onNavigate(content.target)}>▶ {content.action}</button><button type="button" onClick={() => onNavigate(familyMode ? "highlights" : "analysis")}>{familyMode ? "View Highlights" : "Open AI Summary"}</button><button type="button" onClick={() => onNavigate(familyMode ? "player-stats" : "football-intelligence")}>{familyMode ? "Player Statistics" : "Prepare Next Action"}</button></footer>
+  </section>;
+}
+
+function ActionGrid({ items, onNavigate }) {
+  return <section className="premium-action-grid">{items.map(([eyebrow,title,copy,target,status]) => <button type="button" key={title} onClick={() => onNavigate(target)}><span>{eyebrow}</span><h3>{title}</h3><p>{copy}</p><b>{status || "Open"} →</b></button>)}</section>;
+}
+
+export default function Dashboard({ role = "coach", user, onNavigate, onLaunchAIStudio }) {
+  const intelligence = getIntelligence();
   const linkedChildren = role === "parent" ? user?.linkedChildren || [] : [];
-  const [activeChildId, setActiveChildId] = useState(linkedChildren[0]?.id || "ava");
+  let initialChildId = linkedChildren[0]?.id || "ava";
+  try { initialChildId = localStorage.getItem("matchvisionActivePlayerId") || initialChildId; } catch { /* Use the linked default. */ }
+  const [activeChildId, setActiveChildId] = useState(linkedChildren.some((item) => item.id === initialChildId) ? initialChildId : linkedChildren[0]?.id || "ava");
+  const [team, setTeam] = useState("U11 Wallabies");
+  const [club, setClub] = useState("Springvale City Soccer Club");
   const child = demoPlayerProfiles[activeChildId] || demoPlayerProfiles.ava;
-  const childRecognition = getRecognitionRecords().find((record) => record.playerId === activeChildId);
-  const workflow = [
-    ["Record", "live"], ["Upload", "matches"], ["Library", "matches"],
-    ["AI Analysis", role === "parent" ? "child-analysis" : role === "player" ? "player-development" : "analysis"],
-    ["Player Stats", individualMode ? "player-stats" : "team"], ["Highlights", "highlights"],
-    ["Coach Insights", individualMode ? "player-development" : "analysis"],
-    ["Drills", role === "coach" ? "drills" : individualMode ? "player-development" : "football-intelligence"],
-    ["Session", role === "coach" ? "session-builder" : individualMode ? "player-development" : "admin"],
-    ["Development", individualMode ? "player-development" : "team"],
-    ["Awards", individualMode ? "player-awards" : "club-awards"],
+  const recognition = getRecognitionRecords().find((item) => item.playerId === child.id);
+  const [question, summary] = roleCopy[role];
+  const studioQuickActions = role === "parent" ? [
+    ["View Match Library", "matches"], ["View AI Insights", "child-analysis"], ["View Highlights", "highlights"], ["View Development", "player-development"],
+  ] : role === "player" ? [
+    ["My Match Library", "matches"], ["My AI Insights", "analysis"], ["My Highlights", "highlights"], ["My Development", "player-development"],
+  ] : role === "coach" ? [
+    ["Football Intelligence", "football-intelligence"], ["Opponent Explorer", "football-intelligence"], ["Session Builder", "session-builder"], ["Drill Exchange", "drills"], ["Equipment", "equipment"],
+  ] : [
+    ["Club Intelligence", "club-pulse"], ["Club Reports", "admin"], ["Committee", "admin-committee"], ["Registrations", "admin-registrations"], ["Governance", "admin-permissions"],
+  ];
+  const resolveWorkflowTarget = (target) => {
+    if (role === "parent" || role === "player") return ["analysis","football-intelligence","drills","session-builder","equipment","coach-recognition","club-pulse"].includes(target) ? "player-development" : target;
+    if (role === "admin") return target === "drills" || target === "session-builder" ? "football-intelligence" : target === "coach-recognition" ? "admin-awards" : target === "player-development" ? "team" : target;
+    return target === "player-development" ? "team" : target;
+  };
+
+  const roleItems = role === "parent" ? [
+    ["RECENT AI SUMMARY", child.trend, intelligence.player.parentSummary, "child-analysis"],
+    ["LATEST HIGHLIGHT", child.highlights[0], "An approved match moment featuring your selected child.", "highlights", "Watch"],
+    ["RECOGNITION", recognition?.awardType || "Best On Field", "Latest award, certificate and linked reward.", "player-awards"],
+    ["UPCOMING TRAINING", child.nextEvent, "Availability, time and team details.", "calendar"],
+    ["COACH FEEDBACK", "Growing confidence", intelligence.player.coachFeedback, "player-development"],
+    ["DEVELOPMENT FOCUS", child.focus, `${intelligence.player.progress}% progress toward the current goal.`, "player-development"],
+    ["LATEST CERTIFICATE", "Best On Field", "Original Springvale certificate attached to the player profile.", "player-certificates"],
+    ["FULL PROFILE", child.name, "Performance, development, journey and recognition.", "player-profile"],
+  ] : role === "player" ? [
+    ["PERSONAL AI", intelligence.player.summary, "Latest approved development insight.", "analysis"],
+    ["DEVELOPMENT GOAL", child.focus, `${intelligence.player.progress}% complete.`, "player-development"],
+    ["LATEST MATCH", intelligence.match.score, `${intelligence.match.home} vs ${intelligence.match.away}`, "matches"],
+    ["COACH FEEDBACK", "Positive progress", intelligence.player.coachFeedback, "player-development"],
+    ["RECOGNITION", "Best On Field", "Award and certificate attached to your profile.", "player-awards"],
+    ["RECENT HIGHLIGHT", child.highlights[0], "Watch your approved match moment.", "highlights", "Watch"],
+    ["TRAINING FOCUS", intelligence.findings.priority, intelligence.recommendedSession.title, "calendar"],
+  ] : role === "coach" ? [
+    ["OPPONENT EXPLORER", intelligence.match.away, "Formation, style, threats and previous meetings.", "football-intelligence"],
+    ["TODAY’S SESSION", intelligence.recommendedSession.title, `${intelligence.recommendedSession.duration} · AI prepared`, "session-builder"],
+    ["AI PRIORITY", intelligence.findings.priority, `Team compactness: ${intelligence.findings.teamCompactness}.`, "analysis"],
+    ["PLAYER ALERTS", "3 need attention", "Availability, workload and development follow-up.", "team"],
+    ["RECOMMENDED DRILLS", intelligence.recommendedSession.drills[0], `${intelligence.recommendedSession.drills.length} drills selected.`, "drills"],
+    ["EQUIPMENT READY", intelligence.club.equipmentReadiness, `${intelligence.equipment.length} equipment groups generated.`, "equipment"],
+    ["TRAINING OBJECTIVES", "Transition and compactness", "Coach notes and match scenario are ready.", "session-builder"],
+    ["UPCOMING FIXTURES", "Saturday · 10:30 AM", "Ross Reserve · lineup 16/18 available.", "calendar"],
+  ] : [
+    ["CLUB AI", `${intelligence.club.developmentTrend} development`, `${intelligence.club.analysedMatches} analysed matches inform the club.`, "admin"],
+    ["REGISTRATIONS", "218 active players", "Seven new registrations this month.", "admin-registrations"],
+    ["GROUND USAGE", "86% utilised", "Peak demand is 5:45–7:15 PM.", "admin-ground-bookings"],
+    ["COMMITTEE", "2 decisions pending", "Governance actions awaiting review.", "admin-committee"],
+    ["NOTIFICATIONS", "3 priority items", "Operational and family communications.", "admin-notifications"],
+    ["SAFEGUARDING", "2 restricted reviews", "Administrator-only action required.", "admin"],
+    ["REPORTS", "Board report ready", "Performance, participation and operations.", "admin"],
+    ["CLUB HEALTH", intelligence.club.engagement, `Equipment readiness ${intelligence.club.equipmentReadiness}.`, "club-pulse"],
   ];
 
-  return (
-    <div className="mv-dashboard">
-      <section className="mv-welcome">
-        <div>
-          <span>WELCOME BACK</span>
-          <h2>Good afternoon, {firstName} 👋</h2>
-          <p>Your team, live match and AI intelligence are connected.</p>
-        </div>
-      </section>
+  return <div className="premium-dashboard">
+    <section className={`premium-ai-update ${role}`}><div><span>✦ MATCHVISION AI · LATEST CONNECTED UPDATE</span><h1>{question}</h1><p>{summary}</p></div><aside><strong>{role === "coach" ? intelligence.findings.priority : role === "parent" ? child.trend : role === "player" ? child.focus : `${intelligence.club.developmentTrend} development`}</strong><small>Updated from the latest connected match</small></aside><button type="button" onClick={() => onNavigate(role === "coach" || role === "admin" ? "football-intelligence" : "player-development")}>View full insight →</button></section>
 
-      {role === "parent" && <section className="parent-child-dashboard">
-        <header><div><span>MY CHILDREN</span><h2>How is my child progressing?</h2></div><div>{linkedChildren.map((linkedChild) => <button type="button" className={activeChildId === linkedChild.id ? "active" : ""} key={linkedChild.id} onClick={() => setActiveChildId(linkedChild.id)}>{linkedChild.name}<small>{linkedChild.team}</small></button>)}</div></header>
-        <div className="parent-child-summary"><article className="child-identity"><div>{child.initials}</div><span><strong>{child.name}</strong><small>{child.team} · #{child.number}</small></span><button type="button" onClick={() => onNavigate("player-profile")}>Open profile →</button></article>{child.stats.slice(0,3).map(([label,value]) => <article key={label}><strong>{value}</strong><span>{label}</span></article>)}</div>
-        {childRecognition && <section className="parent-recognition-summary"><img src={childRecognition.certificateImage} alt="Best On Field certificate" /><div><span>YOUR CHILD'S LATEST RECOGNITION</span><h3>🏆 {childRecognition.awardType} Award</h3><dl><div><dt>Player</dt><dd>{childRecognition.playerName}</dd></div><div><dt>Match</dt><dd>{childRecognition.match}</dd></div><div><dt>Coach</dt><dd>{childRecognition.coach}</dd></div></dl><div className="parent-recognition-actions"><button type="button" onClick={() => onNavigate("player-certificates")}>View Certificate</button>{childRecognition.reward && <button type="button" onClick={() => onNavigate("player-rewards")}>🎁 Reward Available · View Reward</button>}</div></div></section>}
-        <div className="parent-progress-grid"><article><span>LATEST HIGHLIGHT</span><strong>{child.highlights[0]}</strong><button type="button" onClick={() => onNavigate("highlights")}>Watch highlight →</button></article><article><span>LATEST AWARD</span><strong>{demoAwardHistory[0][0]}</strong><button type="button" onClick={() => onNavigate("player-awards")}>View award →</button></article><article><span>LATEST CERTIFICATE</span><strong>Best On Field · Issued</strong><button type="button" onClick={() => onNavigate("player-certificates")}>View certificate →</button></article><article><span>DEVELOPMENT FOCUS</span><strong>{child.focus}</strong><button type="button" onClick={() => onNavigate("player-development")}>View progress →</button></article><article><span>UPCOMING</span><strong>{child.nextEvent}</strong><button type="button" onClick={() => onNavigate("calendar")}>Open calendar →</button></article></div>
-        <div className="parent-ai-summary"><b>✦ AI</b><div><span>POSITIVE DEVELOPMENT INSIGHT</span><strong>{child.trend}</strong><p>{child.strengths[0]} is becoming a consistent strength. Keep encouraging the current development focus.</p></div><button type="button" onClick={() => onNavigate("child-analysis")}>View child insights →</button></div>
-      </section>}
+    {role === "parent" && <section className="premium-selector"><div><span>WHO ARE YOU VIEWING?</span><h2>Select a child</h2></div><div>{linkedChildren.map((item) => <button type="button" className={activeChildId === item.id ? "active" : ""} key={item.id} onClick={() => { setActiveChildId(item.id); try { localStorage.setItem("matchvisionActivePlayerId", item.id); } catch { /* Dashboard selection remains active in memory. */ } }}><i>{demoPlayerProfiles[item.id]?.initials || item.name.slice(0,2)}</i><strong>{item.name}</strong><small>{item.team}</small></button>)}</div></section>}
+    {role === "coach" && <section className="premium-context-selector"><label><span>CURRENT TEAM</span><select value={team} onChange={(event) => setTeam(event.target.value)}><option>U11 Wallabies</option><option>U12 Girls</option><option>U13 Boys</option></select></label><p>Dashboard context: <strong>{team}</strong></p></section>}
+    {role === "admin" && <section className="premium-context-selector"><label><span>CURRENT CLUB</span><select value={club} onChange={(event) => setClub(event.target.value)}><option>Springvale City Soccer Club</option></select></label><p>Future-ready club context: <strong>{club}</strong></p></section>}
 
-      <section className="mv-workflow-card"><header><div><span>MATCHVISION DEVELOPMENT LOOP</span><h2>From match day to player growth</h2></div><strong>ONE CONNECTED WORKFLOW</strong></header><div>{workflow.map(([label,target], index) => <button type="button" key={label} onClick={() => onNavigate(target)}><b>{String(index + 1).padStart(2,"0")}</b><span>{label}</span>{index < workflow.length - 1 && <i>→</i>}</button>)}</div></section>
+    <MatchCentre role={role} child={child} intelligence={intelligence} onNavigate={onNavigate} />
+    <section className={`dashboard-ai-studio ${role}`}>
+      <div><span>MATCHVISION AI STUDIO</span><h2>{role === "parent" ? `Turn ${child.name}'s match into a private development review.` : role === "player" ? "Turn my match into my next development step." : role === "admin" ? "Turn club match footage into connected club intelligence." : "Upload one match. Prepare the entire coaching workflow."}</h2><p>One shared workflow updates the existing Match Library, AI Analysis, highlights and role-appropriate development tools.</p></div>
+      <div className="dashboard-ai-studio-actions"><button type="button" className="primary" onClick={onLaunchAIStudio}>{role === "parent" ? "Upload Child's Match" : role === "player" ? "Upload My Match" : role === "admin" ? "Upload Club Match" : "Upload Team Match"}</button><button type="button" onClick={onLaunchAIStudio}>Continue Previous Analysis</button></div>
+      <nav className="dashboard-ai-studio-links" aria-label="AI Studio quick actions">{studioQuickActions.map(([label,target]) => <button type="button" key={label} onClick={() => onNavigate(target)}>{label}</button>)}</nav>
+    </section>
+    <header className="premium-section-heading"><span>{role.toUpperCase()} PRIORITIES</span><h2>What you need next</h2></header>
+    <ActionGrid items={roleItems} onNavigate={onNavigate} />
 
-      <section className="mv-live-hero">
-        <div className="mv-live-status">
-          <span><i /> LIVE NOW</span>
-          <strong>42:17</strong>
-          <small>84 watching</small>
-          <b>✓ Approved Family Stream</b>
-        </div>
-
-        <div className="mv-live-score">
-          <div className="mv-team">
-            <img src={springvaleLogo} alt="Springvale City Soccer Club" />
-            <strong>SPRINGVALE CITY</strong>
-            <span>U11 WALLABIES</span>
-          </div>
-
-          <div className="mv-score-centre">
-            <h1>U11 Wallabies vs Oakleigh United</h1>
-            <p>Ross Reserve · Pitch 1</p>
-            <strong>2 – 1</strong>
-            <span>2nd Half</span>
-          </div>
-
-          <div className="mv-team">
-            <div className="mv-opponent">OU</div>
-            <strong>OAKLEIGH</strong>
-            <span>UNITED</span>
-          </div>
-        </div>
-
-        <div className="mv-live-stats">
-          <div><strong>57%</strong><span>Possession</span></div>
-          <div><strong>8</strong><span>Shots</span></div>
-          <div><strong>6</strong><span>On Target</span></div>
-          <div><strong>78%</strong><span>Pass Accuracy</span></div>
-          <div><strong>6.2s</strong><span>Recovery Time</span></div>
-        </div>
-
-        <div className="mv-live-actions">
-          <button className="primary" type="button" onClick={() => onNavigate("live")}>▶ Watch Live Game</button>
-          <button type="button" onClick={() => onNavigate("live")}>✦ Live AI Insights</button>
-          <button type="button" onClick={() => onNavigate("live")}>⌕ Search Live Games</button>
-        </div>
-      </section>
-
-      <div className="mv-dashboard-grid">
-        <section className="mv-card">
-          <header><h3>Live AI Match Insight</h3><span>AI</span></header>
-          <div className="mv-ai-alert">
-            <strong>Momentum is with Springvale City.</strong>
-            <p>Strong pressure in the final third with a stable defensive shape.</p>
-          </div>
-          <div className="mv-event"><span>31′</span><p>Ava created a chance with a through ball.</p><b>+0.12</b></div>
-          <div className="mv-event"><span>36′</span><p>Ethan won a strong midfield tackle.</p><b>+0.08</b></div>
-          <div className="mv-event"><span>39′</span><p>Corner to Springvale City.</p><b>LIVE</b></div>
-        </section>
-
-        <section className="mv-card">
-          <header><h3>Today’s Schedule</h3><button onClick={() => onNavigate("calendar")}>View calendar →</button></header>
-          <div className="mv-row"><b>LIVE</b><p>U11 Wallabies vs Oakleigh United<small>Ross Reserve · Pitch 1</small></p><strong>42′ · 2–1</strong></div>
-          <div className="mv-row"><span>5:30 PM</span><p>U12 Girls vs South Melbourne<small>Ross Reserve · Pitch 2</small></p><strong>Upcoming</strong></div>
-          <div className="mv-row"><span>7:00 PM</span><p>U13 Boys vs Bentleigh Greens<small>Kingston Heath · Pitch 1</small></p><strong>Upcoming</strong></div>
-        </section>
-
-        <section className="mv-card">
-          <header><h3>Quick Actions</h3></header>
-          <button className="mv-quick" onClick={() => onNavigate("matches")}>＋ Upload Match Video</button>
-          <button className="mv-quick" onClick={() => onNavigate("messages")}>＋ Create Message</button>
-          {role !== "parent" && <button className="mv-quick" onClick={() => onNavigate("attendance")}>＋ Mark Attendance</button>}
-          <button className="mv-quick" onClick={() => onNavigate("calendar")}>＋ Add Event</button>
-        </section>
-      </div>
-
-      <div className="mv-dashboard-bottom">
-        <section className="mv-card mv-assistant">
-          <div>
-            <span>✦ MATCHVISION AI</span>
-            <h3>Ask about your team, players or upcoming matches.</h3>
-          </div>
-          <button onClick={() => onNavigate(individualMode ? "team" : "analysis")}>Ask AI</button>
-        </section>
-
-        <section className="mv-card">
-          <header><h3>Player Spotlight</h3><button onClick={() => onNavigate("team")}>View profile →</button></header>
-          <div className="mv-spotlight"><div><strong>Ava Thompson</strong><span>#9 · Midfielder</span></div><b>8.2<small>AI rating</small></b></div>
-        </section>
-
-        <section className="mv-card">
-          <header><h3>Development Focus</h3></header>
-          <p>Improve first touch under pressure.</p>
-          <div className="mv-progress"><i /></div>
-          <small>75% completion</small>
-        </section>
-      </div>
-    </div>
-  );
+    <details className="premium-workflow"><summary><span>CONNECTED AI WORKFLOW</span><strong>See how every action continues →</strong></summary><div>{workflow.map(([label,target],index) => <button type="button" key={label} onClick={() => onNavigate(resolveWorkflowTarget(target))}><b>{String(index+1).padStart(2,"0")}</b><span>{label}</span></button>)}</div></details>
+  </div>;
 }

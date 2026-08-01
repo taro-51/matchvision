@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import "./FootballIntelligence.css";
+import { getIntelligence } from "../lib/intelligence";
 
 const OPPONENTS = [
   {
@@ -177,10 +178,7 @@ export default function FootballIntelligence({ onNavigate, role = "admin" }) {
   const [toast, setToast] = useState("");
   const [packReady, setPackReady] = useState(false);
   const [packProgress, setPackProgress] = useState(0);
-  const [latestAnalysis] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("matchvisionLatestAnalysis") || "null"); }
-    catch { return null; }
-  });
+  const [latestAnalysis] = useState(() => getIntelligence());
 
   const opponent = OPPONENTS.find((item) => item.id === opponentId) || OPPONENTS[0];
   const filtered = useMemo(() => OPPONENTS.filter((item) => `${item.club} ${item.suburb}`.toLowerCase().includes(search.toLowerCase())), [search]);
@@ -212,7 +210,24 @@ export default function FootballIntelligence({ onNavigate, role = "admin" }) {
 
   const openRecommendedSession = (target = "session-builder") => {
     try {
-      localStorage.setItem("matchvisionRecommendedSession", JSON.stringify({ title: `Opponent preparation · ${opponent.club}`, objective: `Exploit ${opponent.weakness.toLowerCase()}`, duration: "70 minutes", selectedDrills: recommendedDrills, sourceMatch: `${opponent.club} opponent analysis`, opponent: opponent.club, equipment: recommendedEquipment }));
+      localStorage.setItem("matchvisionRecommendedSession", JSON.stringify({
+        title: `Opponent preparation · ${opponent.club}`,
+        trainingFocus: `Prepare for ${opponent.press.toLowerCase()} and exploit ${opponent.weakness.toLowerCase()}`,
+        objective: `Exploit ${opponent.weakness.toLowerCase()}`,
+        objectives: ["Protect transition space", `Control ${opponent.attackSide.toLowerCase()}-side danger`, "Attack quickly after regaining possession"],
+        duration: "70 minutes",
+        coachNotes: matchPlanNotes,
+        selectedDrills: recommendedDrills,
+        sections: [
+          { phase: "Warm Up", minutes: 10, title: "Scanning and recovery movement" },
+          { phase: "Technical", minutes: 12, title: recommendedDrills[1] },
+          { phase: "Tactical", minutes: 16, title: recommendedDrills[0] },
+          { phase: "Small Sided Game", minutes: 12, title: "Transition game · 4v4 + targets" },
+          { phase: "Match Scenario", minutes: 15, title: `Prepare for ${opponent.formation}` },
+          { phase: "Cool Down", minutes: 5, title: "Player review and reminders" },
+        ],
+        sourceMatch: `${opponent.club} opponent analysis`, opponent: opponent.club, equipment: recommendedEquipment
+      }));
     } catch {
       // Connected demo flow remains usable without storage.
     }
@@ -234,9 +249,19 @@ export default function FootballIntelligence({ onNavigate, role = "admin" }) {
           <span>MATCHVISION · AI-POWERED COACH PREPARATION</span>
           <h1>Opponent Explorer</h1>
           <p>Use AI-powered match analysis to understand opponents, identify threats and create preparation plans.</p>
-          <div className="fi-hero-actions"><button type="button" onClick={() => onNavigate?.("matches")}>Upload Match</button><button type="button" onClick={() => setTab("opponents")}>Analyse Opponent</button><button type="button" onClick={() => setTab("preparation")}>Create Match Plan</button></div>
+          <div className="fi-hero-actions"><button type="button" onClick={() => onNavigate?.("ai-studio")}>Open AI Studio</button><button type="button" onClick={() => setTab("opponents")}>Analyse Opponent</button><button type="button" onClick={() => setTab("preparation")}>Create Match Plan</button></div>
         </div>
         <div className="fi-memory-score"><small>OPPONENT AI</small><strong>{opponent.confidence}%</strong><span>{opponent.club}</span></div>
+      </section>
+
+      <section className="fi-command-grid" aria-label="Football Intelligence workflow">
+        <button type="button" onClick={() => setTab("opponents")}><span>UPCOMING OPPONENT</span><strong>{opponent.club}</strong><small>{opponent.formation} · {opponent.press}</small></button>
+        <button type="button" onClick={() => onNavigate?.("analysis")}><span>LATEST ANALYSED MATCH</span><strong>{latestAnalysis.match.home} vs {latestAnalysis.match.away}</strong><small>{latestAnalysis.match.score} · AI report available</small></button>
+        <button type="button" onClick={() => setTab("preparation")}><span>AI TACTICAL SUMMARY</span><strong>Protect transition space</strong><small>Exploit {opponent.weakness.toLowerCase()}</small></button>
+        <button type="button" onClick={() => setTab("preparation")}><span>MATCH PREPARATION</span><strong>Saturday · 10:30 AM</strong><small>Ross Reserve · predicted {opponent.formation}</small></button>
+        <button type="button" onClick={() => setTab("coaches")}><span>COACH NOTES</span><strong>{notes.filter((item) => item.opponent === opponent.club).length} observations</strong><small>Tactical, player and training reminders</small></button>
+        <button type="button" onClick={() => openRecommendedSession()}><span>RECOMMENDED SESSION</span><strong>{recommendedDrills[0]}</strong><small>Open pre-populated Session Builder</small></button>
+        <button type="button" onClick={() => openRecommendedSession("equipment")}><span>EQUIPMENT REQUIRED</span><strong>{recommendedEquipment.length} equipment groups</strong><small>Generate training readiness checklist</small></button>
       </section>
 
       <nav className="fi-tabs">
@@ -285,7 +310,7 @@ export default function FootballIntelligence({ onNavigate, role = "admin" }) {
       {tab === "opponents" && <>
         <section className="fi-search-row"><div><span>OPPONENT INTELLIGENCE</span><h2>Search the club’s tactical memory</h2></div><label>⌕<input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search club or suburb..." /></label></section>
         <div className="fi-opponent-layout">
-          <aside className="fi-opponent-list">{filtered.map((item) => <button className={item.id === opponentId ? "active" : ""} key={item.id} onClick={() => setOpponentId(item.id)}><strong>{item.club}</strong><span>{item.suburb} · {item.distance}</span><small>{item.matches} observations</small></button>)}</aside>
+          <aside className="fi-opponent-list">{filtered.map((item) => <button className={item.id === opponentId ? "active" : ""} key={item.id} onClick={() => setOpponentId(item.id)}><strong>{item.club}</strong><span>{item.suburb} · {item.distance}</span><small>{item.matches} observations</small></button>)}{filtered.length === 0 && <div className="fi-empty"><strong>No opponent found</strong><p>Try a different club or suburb.</p><button type="button" onClick={() => setSearch("")}>Clear search</button></div>}</aside>
           <main>
             <section className="fi-panel fi-profile-head"><div><span>OPPONENT PROFILE</span><h2>{opponent.club}</h2><p>{opponent.suburb} · {opponent.distance} from Springvale</p></div><div className="fi-confidence"><strong>{opponent.confidence}%</strong><span>AI confidence</span></div></section>
             <section className="fi-stats compact"><Stat label="Played" value={opponent.matches} note="All Springvale teams" /><Stat label="Record" value={`${opponent.wins}-${opponent.draws}-${opponent.losses}`} note="W-D-L" /><Stat label="Goals" value={`${opponent.goalsFor}-${opponent.goalsAgainst}`} note="For-against" /><Stat label="Likely shape" value={opponent.formation} note="Current model" /></section>

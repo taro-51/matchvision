@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import "./AIAnalysis.css";
+import { demoPlayerProfiles } from "../data/playerProfile";
+import { getRecognitionRecords } from "../data/recognition";
+import { getIntelligence } from "../lib/intelligence";
 
 const builtInDrills = [
   {
@@ -63,7 +66,7 @@ const analysisFindings = [
   },
 ];
 
-export default function AIAnalysis({ role = "coach", onNavigate }) {
+function CoachAIAnalysis({ onNavigate, onLaunchAIStudio }) {
   const [uploadedDrills, setUploadedDrills] = useState([]);
   const [latestAnalysis, setLatestAnalysis] = useState(null);
   const [selectedDrills, setSelectedDrills] = useState([
@@ -153,6 +156,7 @@ export default function AIAnalysis({ role = "coach", onNavigate }) {
               {" · "}94% confidence
             </span>
           </div>
+          <button type="button" onClick={onLaunchAIStudio}>Analyse Another Match</button>
         </div>
       </section>
 
@@ -518,7 +522,7 @@ export default function AIAnalysis({ role = "coach", onNavigate }) {
                 <i className="blue-player p4" />
                 <i className="blue-player p5" />
               </div>
-              <button type="button">▶</button>
+              <button type="button" onClick={() => showToast(`Playing ${videoOpen.videoName || "coaching preview"}`)}>▶</button>
               <span>{videoOpen.videoName || "Uploaded coaching video"}</span>
             </div>
 
@@ -549,4 +553,30 @@ export default function AIAnalysis({ role = "coach", onNavigate }) {
       {toast && <div className="analysis-toast">{toast}</div>}
     </div>
   );
+}
+
+function PersonalAIAnalysis({ role, user, onNavigate, onLaunchAIStudio }) {
+  const intelligence = getIntelligence();
+  const linked = role === "parent" ? user?.linkedChildren || [] : [user?.playerProfile || { id: "ava" }];
+  let storedId = "ava";
+  try { storedId = localStorage.getItem("matchvisionActivePlayerId") || linked[0]?.id || "ava"; } catch { storedId = linked[0]?.id || "ava"; }
+  const activeId = linked.some((item) => item.id === storedId) ? storedId : linked[0]?.id || "ava";
+  const profile = demoPlayerProfiles[activeId] || demoPlayerProfiles.ava;
+  const recognition = getRecognitionRecords().find((item) => item.playerId === activeId);
+  const [completed, setCompleted] = useState([]);
+  const stats = [["Match rating", intelligence.player.rating], ["Goals", "1"], ["Assists", "1"], ["Pass completion", "78%"], ["Distance covered", "5.4 km"], ["Touches", "38"]];
+  const strengths = profile.strengths;
+  const improvements = profile.development;
+  return <div className="analysis-page personal-ai-page">
+    <section className="analysis-hero personal-ai-hero"><div><span>✦ MATCHVISION AI · {role === "parent" ? "CHILD DEVELOPMENT" : "MY PERFORMANCE REVIEW"}</span><h2>{role === "parent" ? `How is ${profile.name} progressing?` : `${profile.name}, here is your latest review.`}</h2><p>{role === "parent" ? intelligence.player.parentSummary : intelligence.player.summary}</p></div><div className="analysis-status"><i /><div><strong>Approved personal analysis</strong><span>{profile.team} · Latest match processed</span></div><button type="button" onClick={onLaunchAIStudio}>Analyse Another Match</button></div></section>
+    <section className="personal-ai-summary"><article><span>LATEST AI SUMMARY</span><h3>{profile.trend}</h3><p>{role === "parent" ? intelligence.player.parentSummary : "Excellent effort tracking back. Great improvement in passing accuracy. Next match, try opening your body before receiving."}</p></article><article><span>COACH FEEDBACK</span><h3>Positive progress</h3><p>{intelligence.player.coachFeedback}</p><strong>Lisa Pitsos · Head Coach</strong></article><article><span>DEVELOPMENT FOCUS</span><h3>{profile.focus}</h3><p>Recommended practice: first-touch receiving through small gates, using both feet.</p></article></section>
+    <section className="personal-ai-stats">{stats.map(([label,value]) => <article key={label}><strong>{value}</strong><span>{label}</span></article>)}</section>
+    <div className="personal-ai-detail"><section><header><span>STRENGTHS</span><h2>What is going well</h2></header><ul>{strengths.map((item) => <li key={item}>✓ {item}</li>)}</ul><header><span>AREAS IMPROVING</span><h2>What comes next</h2></header><ul>{improvements.map((item) => <li key={item}>↗ {item}</li>)}</ul></section><section><header><span>CHILD-ONLY HEAT MAP</span><h2>Where {profile.name.split(" ")[0]} influenced the match</h2></header><div className="personal-heat-map"><i /><i /><i /><span>{profile.initials}</span></div><p>Only movement linked to this player is displayed. No opposition or teammate tactical data is included.</p></section></div>
+    <section className="personal-goals"><header><span>DEVELOPMENT GOALS · {intelligence.player.progress}%</span><h2>Small actions for the next match</h2></header><div>{intelligence.player.goals.map((goal) => <button type="button" className={completed.includes(goal) ? "complete" : ""} key={goal} onClick={() => setCompleted((current) => current.includes(goal) ? current.filter((item) => item !== goal) : [...current, goal])}><i>{completed.includes(goal) ? "✓" : "○"}</i><span>{goal}</span></button>)}</div></section>
+    <section className="personal-ai-actions"><button type="button" onClick={() => onNavigate("highlights")}>▶ Latest Highlights</button><button type="button" onClick={() => onNavigate("player-development")}>Open Development</button><button type="button" onClick={() => onNavigate("player-awards")}>Recent Award · {recognition?.awardType || "Best On Field"}</button><button type="button" onClick={() => onNavigate("player-certificates")}>View Certificate</button></section>
+  </div>;
+}
+
+export default function AIAnalysis(props) {
+  return ["parent", "player"].includes(props.role) ? <PersonalAIAnalysis {...props} /> : <CoachAIAnalysis {...props} />;
 }
