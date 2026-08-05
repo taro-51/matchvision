@@ -3,6 +3,7 @@ import "./AIAnalysis.css";
 import { demoPlayerProfiles } from "../data/playerProfile";
 import { getRecognitionRecords } from "../data/recognition";
 import { getIntelligence } from "../lib/intelligence";
+import MatchIntelligenceReport from "../components/MatchIntelligenceReport";
 
 const builtInDrills = [
   {
@@ -159,6 +160,18 @@ function CoachAIAnalysis({ onNavigate, onLaunchAIStudio }) {
           <button type="button" onClick={onLaunchAIStudio}>Analyse Another Match</button>
         </div>
       </section>
+
+      <MatchIntelligenceReport role="coach" onNavigate={onNavigate} />
+
+      <section className="coach-analysis-overview">
+        {[["Possession","57%","+6% second half"],["Pass accuracy","78%","312/400 completed"],["Final third entries","24","Right side 63%"],["Ball recoveries","41","Average 6.8 sec"],["Shots","8","5 on target"],["Press resistance","72%","Improving"]].map(([label,value,note]) => <article key={label}><span>{label}</span><strong>{value}</strong><small>{note}</small></article>)}
+      </section>
+      <section className="coach-analysis-visuals">
+        <article><header><span>PASSING NETWORK</span><h3>Right-side combinations drove progression</h3></header><div className="analysis-network">{["GK","CB","CB","LB","RB","CM","CM","RW","10","LW","9"].map((label,index) => <i key={`${label}-${index}`} style={{left:`${10+(index%4)*25}%`,top:`${12+Math.floor(index/4)*34}%`}}>{label}</i>)}</div><p>Strong links between right back, midfield and right wing created 63% of valuable entries.</p></article>
+        <article><header><span>SHOT MAP</span><h3>Eight attempts, five on target</h3></header><div className="analysis-shot-map">{[18,31,43,55,62,71,78,86].map((left,index) => <i className={index<5?"target":""} key={left} style={{left:`${left}%`,top:`${22+(index%3)*24}%`}} />)}</div><p>Best chances arrived after switches into the right channel and early cutbacks.</p></article>
+        <article><header><span>FORMATION & TEAM SHAPE</span><h3>4-2-3-1 became 3-2-5 in possession</h3></header><div className="analysis-shape-bars"><span style={{width:"86%"}}>Build-up width</span><span style={{width:"68%"}}>Midfield connection</span><span style={{width:"54%"}}>Defensive compactness</span></div><p>The left fullback advanced early, creating transition exposure.</p></article>
+      </section>
+      <section className="coach-analysis-depth">{["Transition Analysis","Build Up Patterns","Defensive Actions","Attacking Actions","Opponent Strengths","Opponent Weaknesses","Key Opposition Players","Set Pieces","Coach Notes","Training Priorities"].map((item,index)=><article key={item}><span>{String(index+1).padStart(2,"0")}</span><strong>{item}</strong><p>{index%2?"Evidence, clips and match context are ready for coach review.":"AI pattern detected and linked to the recommended session."}</p></article>)}</section>
 
       <section className="analysis-flow">
         <div className="flow-step complete">
@@ -564,19 +577,28 @@ function PersonalAIAnalysis({ role, user, onNavigate, onLaunchAIStudio }) {
   const profile = demoPlayerProfiles[activeId] || demoPlayerProfiles.ava;
   const recognition = getRecognitionRecords().find((item) => item.playerId === activeId);
   const [completed, setCompleted] = useState([]);
-  const stats = [["Match rating", intelligence.player.rating], ["Goals", "1"], ["Assists", "1"], ["Pass completion", "78%"], ["Distance covered", "5.4 km"], ["Touches", "38"]];
+  const stats = [["Match rating", intelligence.player.rating], ["Touches", "38"], ["Passes", "31"], ["Pass accuracy", "78%"], ["Goals", "1"], ["Assists", "1"], ["Defensive actions", "7"], ["Distance covered", "5.4 km"]];
   const strengths = profile.strengths;
   const improvements = profile.development;
   return <div className="analysis-page personal-ai-page">
     <section className="analysis-hero personal-ai-hero"><div><span>✦ MATCHVISION AI · {role === "parent" ? "CHILD DEVELOPMENT" : "MY PERFORMANCE REVIEW"}</span><h2>{role === "parent" ? `How is ${profile.name} progressing?` : `${profile.name}, here is your latest review.`}</h2><p>{role === "parent" ? intelligence.player.parentSummary : intelligence.player.summary}</p></div><div className="analysis-status"><i /><div><strong>Approved personal analysis</strong><span>{profile.team} · Latest match processed</span></div><button type="button" onClick={onLaunchAIStudio}>Analyse Another Match</button></div></section>
+    <MatchIntelligenceReport role={role} user={user} compact onNavigate={onNavigate} />
     <section className="personal-ai-summary"><article><span>LATEST AI SUMMARY</span><h3>{profile.trend}</h3><p>{role === "parent" ? intelligence.player.parentSummary : "Excellent effort tracking back. Great improvement in passing accuracy. Next match, try opening your body before receiving."}</p></article><article><span>COACH FEEDBACK</span><h3>Positive progress</h3><p>{intelligence.player.coachFeedback}</p><strong>Lisa Pitsos · Head Coach</strong></article><article><span>DEVELOPMENT FOCUS</span><h3>{profile.focus}</h3><p>Recommended practice: first-touch receiving through small gates, using both feet.</p></article></section>
     <section className="personal-ai-stats">{stats.map(([label,value]) => <article key={label}><strong>{value}</strong><span>{label}</span></article>)}</section>
     <div className="personal-ai-detail"><section><header><span>STRENGTHS</span><h2>What is going well</h2></header><ul>{strengths.map((item) => <li key={item}>✓ {item}</li>)}</ul><header><span>AREAS IMPROVING</span><h2>What comes next</h2></header><ul>{improvements.map((item) => <li key={item}>↗ {item}</li>)}</ul></section><section><header><span>CHILD-ONLY HEAT MAP</span><h2>Where {profile.name.split(" ")[0]} influenced the match</h2></header><div className="personal-heat-map"><i /><i /><i /><span>{profile.initials}</span></div><p>Only movement linked to this player is displayed. No opposition or teammate tactical data is included.</p></section></div>
     <section className="personal-goals"><header><span>DEVELOPMENT GOALS · {intelligence.player.progress}%</span><h2>Small actions for the next match</h2></header><div>{intelligence.player.goals.map((goal) => <button type="button" className={completed.includes(goal) ? "complete" : ""} key={goal} onClick={() => setCompleted((current) => current.includes(goal) ? current.filter((item) => item !== goal) : [...current, goal])}><i>{completed.includes(goal) ? "✓" : "○"}</i><span>{goal}</span></button>)}</div></section>
     <section className="personal-ai-actions"><button type="button" onClick={() => onNavigate("highlights")}>▶ Latest Highlights</button><button type="button" onClick={() => onNavigate("player-development")}>Open Development</button><button type="button" onClick={() => onNavigate("player-awards")}>Recent Award · {recognition?.awardType || "Best On Field"}</button><button type="button" onClick={() => onNavigate("player-certificates")}>View Certificate</button></section>
+    <section className="personal-progress-timeline"><header><span>PROGRESS TIMELINE</span><h2>Development that builds match by match</h2></header><div>{[["APR","Joined development goal"],["MAY","Passing accuracy improved"],["JUN","First assist recorded"],["JUL","Best On Field recognition"],["NOW",`${intelligence.player.progress}% toward current goal`]].map(([date,event])=><article key={date}><i /><span>{date}</span><strong>{event}</strong></article>)}</div></section>
   </div>;
 }
 
+function AdminAIAnalysis({ onNavigate, onLaunchAIStudio }) {
+  const intelligence = getIntelligence();
+  const metrics = [["Club performance","+8%"],["Ground usage","86%"],["Registrations","218"],["Attendance","92%"],["Coach activity","24"],["Player development",intelligence.club.developmentTrend],["Recognition","37"],["Club engagement",intelligence.club.engagement]];
+  return <div className="analysis-page admin-ai-analysis"><section className="analysis-hero"><div><span>MATCHVISION AI · CLUB INTELLIGENCE</span><h2>One connected view of football, people and club operations.</h2><p>Administrators receive aggregated intelligence without exposing private player coaching detail.</p></div><div className="analysis-status"><i /><div><strong>{intelligence.club.analysedMatches} matches connected</strong><span>Club-wide report current</span></div><button type="button" onClick={onLaunchAIStudio}>Analyse Club Match</button></div></section><MatchIntelligenceReport role="admin" compact onNavigate={onNavigate} /><section className="admin-analysis-grid">{metrics.map(([label,value])=><article key={label}><span>{label}</span><strong>{value}</strong><small>Live demo intelligence</small></article>)}</section><section className="admin-analysis-insights"><article><span>AI INSIGHT</span><h3>Development is trending upwards.</h3><p>Match evidence, coach activity and attendance remain positively aligned.</p></article><article><span>OPERATIONS</span><h3>Ground demand peaks Tuesday evenings.</h3><p>One booking conflict requires committee attention.</p></article><article><span>SAFEGUARDING</span><h3>Restricted review remains administrator-only.</h3><p>Two consent records require follow-up before media publication.</p></article></section><div className="admin-analysis-actions"><button type="button" onClick={() => onNavigate("club-pulse")}>Open Club Pulse</button><button type="button" onClick={() => onNavigate("admin")}>Club Reports</button><button type="button" onClick={() => onNavigate("admin-committee")}>Committee</button><button type="button" onClick={() => onNavigate("admin-registrations")}>Registrations</button></div></div>;
+}
+
 export default function AIAnalysis(props) {
+  if (props.role === "admin") return <AdminAIAnalysis {...props} />;
   return ["parent", "player"].includes(props.role) ? <PersonalAIAnalysis {...props} /> : <CoachAIAnalysis {...props} />;
 }

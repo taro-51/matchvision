@@ -428,6 +428,10 @@ export default function MatchLibrary({
 
       {isRestrictedProfile && <section className="match-personal-summary"><div><span>{role === "parent" ? "SELECTED CHILD" : "PLAYER"}</span><h3>{selectedPlayerData?.name || permittedPlayers[0]?.name}</h3><p>Approved matches, replays, clips, highlights and personal AI summaries only.</p></div><button type="button" onClick={() => onNavigate(role === "parent" ? "child-analysis" : "analysis")}>Open Personal AI Review →</button><button type="button" onClick={() => onNavigate("highlights")}>View Approved Highlights →</button></section>}
 
+      {role === "parent" && <section className="match-role-links"><button type="button" onClick={() => onNavigate("child-analysis")}>Linked Child AI Reports</button><button type="button" onClick={() => onNavigate("highlights")}>Linked Child Highlights</button><button type="button" onClick={() => onNavigate("player-stats")}>Linked Child Statistics</button><button type="button" onClick={() => onNavigate("player-awards")}>Awards</button><button type="button" onClick={() => onNavigate("player-certificates")}>Certificates</button></section>}
+      {role === "player" && <section className="match-role-links"><button type="button" onClick={() => onNavigate("analysis")}>My AI Reports</button><button type="button" onClick={() => onNavigate("highlights")}>My Highlights</button><button type="button" onClick={() => onNavigate("player-development")}>My Development</button><button type="button" onClick={() => onNavigate("player-stats")}>My Statistics</button><button type="button" onClick={() => onNavigate("player-awards")}>My Awards</button></section>}
+      {role === "admin" && <section className="match-role-links"><button type="button" onClick={() => onNavigate("analysis")}>Club AI Reports</button><button type="button" onClick={() => onNavigate("football-intelligence")}>Club Analytics</button><button type="button" onClick={() => onNavigate("club-pulse")}>Club Intelligence</button><button type="button" onClick={() => onNavigate("team")}>Teams & Age Groups</button></section>}
+
       <section className="match-permission">
         <strong>
           {role === "parent"

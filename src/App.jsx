@@ -282,27 +282,27 @@ const previousNavigationConfig = {
 void previousNavigationConfig;
 const navigationConfig = {
   admin: [
-    topLink("dashboard"), topLink("ai-studio"), topLink("messages"), topLink("calendar"),
+    topLink("dashboard"), topLink("ai-studio"), topLink("matches", "Club Match Library"), topLink("messages"), topLink("calendar"),
     section("football-hub-heading", "Football Hub", "FI"), link("football-intelligence", "Football Intelligence / Opponent Explorer"),
     section("team-hub-heading", "Team Hub", "TM"), link("team", "Team Overview"), link("live"), link("attendance"),
     section("club-hub-heading", "Club Hub", "CL"), link("club-home"), link("club-pulse"), link("club-news"), link("club-parent-welcome"), link("club-ground-map"), link("club-player-journey"), link("club-about"), link("club-join"), link("club-values"), link("club-hall-of-fame"), link("club-awards"), link("club-events"), link("club-volunteers"), link("club-sponsors"), link("club-gallery"), link("club-canteen"), link("documents", "Club Documents"),
     section("admin-hub-heading", "Admin Hub", "AD"), link("admin"), link("admin-settings"), link("admin-committee"), link("admin-registrations"), link("admin-sponsors", "Sponsors Management"), link("admin-documents", "Documents Management"), link("admin-awards", "Awards Management"), link("admin-rewards"), link("admin-recruitment"), link("admin-volunteers", "Volunteer Management"), link("admin-equipment", "Equipment Management"), link("admin-ground-bookings"), link("admin-notifications"), link("admin-permissions"),
   ],
   coach: [
-    topLink("dashboard"), topLink("ai-studio"), topLink("messages"), topLink("calendar"),
+    topLink("dashboard"), topLink("ai-studio"), topLink("matches", "Match Library"), topLink("messages"), topLink("calendar"),
     section("football-hub-heading", "Football Hub", "FI"), link("football-intelligence", "Football Intelligence / Opponent Explorer"),
     section("team-hub-heading", "Team Hub", "TM"), link("team", "Team Overview"), link("live"), link("attendance"),
     section("coach-hub-heading", "Coach Hub", "CO"), link("drills"), link("coach-profiles"), link("session-builder"), link("equipment", "Equipment Planning"), link("coach-recognition"), link("documents", "Coach Documents"),
     section("club-hub-heading", "Club Hub", "CL"), link("club-home"), link("club-join", "Join Our Club"), link("coach-recruitment", "Recruitment Resources"), link("club-sponsors", "Sponsor Resources"), link("club-awards", "Awards Centre"), link("club-events"), link("club-gallery"), link("club-canteen"),
   ],
   parent: [
-    topLink("dashboard"), topLink("ai-studio"), topLink("messages"), topLink("calendar"),
+    topLink("dashboard"), topLink("ai-studio"), topLink("matches", "My Child's Match Library"), topLink("messages"), topLink("calendar"),
     section("team-hub-heading", "Team Hub", "TM"), link("team", "Team Overview"), link("live", "Live Team Game"),
     section("player-hub-heading", "Player Hub", "PL"), link("player-profile", "Linked Children"), link("player-stats", "Child Statistics"), link("player-development", "Development Updates"), link("club-player-journey", "Child Journey"), link("player-awards", "Awards"), link("player-certificates", "Certificates"), link("player-rewards", "Rewards"), link("player-achievements", "Achievements"),
     section("club-hub-heading", "Club Hub", "CL"), link("club-parent-welcome"), link("club-events"), link("documents"), link("club-ground-map"), link("club-values"), link("club-gallery"), link("club-canteen"),
   ],
   player: [
-    topLink("dashboard"), topLink("ai-studio"), topLink("messages"), topLink("calendar"),
+    topLink("dashboard"), topLink("ai-studio"), topLink("matches", "My Match Library"), topLink("messages"), topLink("calendar"),
     section("team-hub-heading", "Team Hub", "TM"), link("team", "Team Overview"), link("live", "Live Team Game"),
     section("player-hub-heading", "Player Hub", "PL"), link("player-profile", "My Profile"), link("player-stats"), link("player-development"), link("club-player-journey", "My Journey"), link("player-awards"), link("player-certificates"), link("player-rewards"), link("player-achievements"),
     section("club-hub-heading", "Club Hub", "CL"), link("club-events"), link("documents"), link("club-gallery"), link("club-values"), link("club-canteen"),

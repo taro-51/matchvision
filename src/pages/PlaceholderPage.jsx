@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { navigation } from "../data/navigation";
 import { getIntelligence } from "../lib/intelligence";
+import TeamOperations from "../components/TeamOperations";
+import CoachCommitment from "../components/CoachCommitment";
 
 const initialPlayers = [
   { name: "Ava Thompson", number: 7, status: "Confirmed", rate: "96%" },
@@ -1105,6 +1107,10 @@ function TeamHubPage({ role = "parent", onNavigate }) {
         <div style={{ flex: "1 1 320px" }}><span style={styles.cardEyebrow}>MATCHVISION AI STUDIO</span><h3 style={{ margin: "6px 0" }}>Turn the next match into connected team intelligence.</h3></div>
         <button type="button" style={styles.primaryButton} onClick={() => onNavigate?.("ai-studio")}>Analyse New Match</button>
         <button type="button" style={styles.secondaryButton} onClick={() => onNavigate?.("ai-studio")}>Continue Analysis</button>
+        <button type="button" style={styles.secondaryButton} onClick={() => onNavigate?.("live")}>Live Game</button>
+        <button type="button" style={styles.secondaryButton} onClick={() => onNavigate?.("calendar")}>Calendar</button>
+        <button type="button" style={styles.secondaryButton} onClick={() => onNavigate?.("messages")}>Team Messaging</button>
+        {(role === "coach" || role === "admin") && <button type="button" style={styles.secondaryButton} onClick={() => onNavigate?.("equipment")}>Equipment</button>}
       </section>
       <div style={styles.teamHubRoleBar}>
         <div>
@@ -1148,6 +1154,9 @@ function TeamHubPage({ role = "parent", onNavigate }) {
         <button type="button" onClick={() => setActiveTab(familyMode ? "AI report" : "AI insights")} style={{ minHeight: "44px", padding: "10px 14px", border: "1px solid #d63a4e", borderRadius: "9px", color: "#fff", background: "#c62b3f" }}>Open team evidence →</button>
       </section>
 
+      {!familyMode && <CoachCommitment onNavigate={onNavigate} />}
+      <TeamOperations key={`${role}-${selectedChild.id}`} role={role} personName={familyMode ? selectedChild.name : "Lisa Pitsos"} hideCoachAvailability={!familyMode} />
+
       {familyMode ? (
         <>
           <div style={styles.teamHubParentHero}>
@@ -1186,7 +1195,7 @@ function TeamHubPage({ role = "parent", onNavigate }) {
                   <button
                     type="button"
                     key={child.id}
-                    onClick={() => setSelectedChildId(player.id)}
+                    onClick={() => { setSelectedChildId(player.id); try { localStorage.setItem("matchvisionActivePlayerId", player.id); } catch { /* Keep Team Hub selection in memory. */ } }}
                     style={{
                       ...styles.teamHubChildButton,
                       ...(selectedChildId === player.id
@@ -4883,7 +4892,13 @@ export default function PlaceholderPage({ page, userRole, role, onNavigate }) {
   }
 
   if (page === "attendance") {
-    return <AttendancePage />;
+    let attendancePerson = sessionUser?.name || "Lisa Pitsos";
+    if (loggedInRole === "parent") {
+      let activePlayerId = sessionUser?.linkedChildren?.[0]?.id;
+      try { activePlayerId = localStorage.getItem("matchvisionActivePlayerId") || activePlayerId; } catch { /* Use the first linked child. */ }
+      attendancePerson = sessionUser?.linkedChildren?.find((child) => child.id === activePlayerId)?.name || sessionUser?.linkedChildren?.[0]?.name || attendancePerson;
+    }
+    return <><TeamOperations role={loggedInRole} personName={attendancePerson} /><AttendancePage /></>;
   }
 
   if (page === "calendar") {
