@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import WorkflowCompletion from "../../components/WorkflowCompletion";
 import "./CoachHub.css";
 
 const drills = [
@@ -169,13 +170,13 @@ const coaches = [
   },
 ];
 
-export default function CoachHub({ page = "drills" }) {
+export default function CoachHub({ page = "drills", onNavigate }) {
   if (page === "coach-profiles") {
     return <CoachProfiles />;
   }
 
   if (page === "session-builder") {
-    return <SessionBuilder />;
+    return <SessionBuilder onNavigate={onNavigate} />;
   }
 
   return <DrillExchange />;
@@ -898,7 +899,7 @@ function CoachProfiles() {
   );
 }
 
-function SessionBuilder() {
+function SessionBuilder({ onNavigate }) {
   const [objective, setObjective] = useState("Defending");
   const [playerCount, setPlayerCount] = useState("14");
   const [duration, setDuration] = useState("60 minutes");
@@ -1116,6 +1117,7 @@ function SessionBuilder() {
               >
                 {saved ? "Session saved ✓" : "Save session and equipment"}
               </button>
+              {saved && <WorkflowCompletion title="Session Saved" message="The session plan and equipment recommendation are ready for the coaching team." actions={[{ label: "Return to Session Builder", primary: true, onClick: () => setSaved(false) }, { label: "Return to Coach Hub", onClick: () => onNavigate?.("drills") }]} />}
             </>
           )}
         </article>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import "./TeamOperations.css";
+import WorkflowCompletion from "./WorkflowCompletion";
 
 const players = ["Ava Thompson", "Mia Rodriguez", "Lily Chen", "Sophie Williams", "Ruby Anderson", "Charlotte Brown", "Olivia Martin"];
 const coaches = ["Lisa Pitsos", "Daniel Brooks", "Alicia Tran", "Michael Tran"];
@@ -12,12 +13,13 @@ function loadOperations() {
   try { return { ...fallback, ...JSON.parse(localStorage.getItem(storageKey) || "{}") }; } catch { return fallback; }
 }
 
-export default function TeamOperations({ role, personName, compact = false, hideCoachAvailability = false }) {
+export default function TeamOperations({ role, personName, compact = false, hideCoachAvailability = false, onNavigate }) {
   const [data, setData] = useState(loadOperations);
   const [response, setResponse] = useState(data.availability[personName]?.status || "Unknown");
   const [reason, setReason] = useState(data.availability[personName]?.reason || "Illness");
   const [comment, setComment] = useState(data.availability[personName]?.comment || "");
   const [notice, setNotice] = useState("");
+  const [completion, setCompletion] = useState(false);
   const familyMode = role === "parent" || role === "player";
 
   useEffect(() => {
@@ -36,6 +38,7 @@ export default function TeamOperations({ role, personName, compact = false, hide
 
   function saveAvailability() {
     persist({ ...data, availability: { ...data.availability, [personName]: { status: response, reason: response === "Unavailable" ? reason : "", comment } } }, "Availability saved");
+    setCompletion(true);
   }
 
   function setPlayerStatus(name, status) {
@@ -56,6 +59,7 @@ export default function TeamOperations({ role, personName, compact = false, hide
       <div className="team-operation-grid"><div className="team-operation-panel"><span>COACH AVAILABILITY</span><h3>Lisa Pitsos</h3><div className="coach-availability-controls"><select value={data.coachAvailability} onChange={(event) => persist({ ...data, coachAvailability: event.target.value }, "Coach availability updated")}><option>Available</option><option>Sick</option><option>Holiday</option><option>Work</option><option>Other</option></select>{data.coachAvailability !== "Available" && <><select value={data.replacementCoach} onChange={(event) => setData({ ...data, replacementCoach: event.target.value })}><option value="">Select replacement coach</option>{coaches.slice(1).map((coach) => <option key={coach}>{coach}</option>)}</select><textarea value={data.replacementReason} onChange={(event) => setData({ ...data, replacementReason: event.target.value })} placeholder="Replacement notes" /><button type="button" onClick={() => persist(data, `Temporary event access granted to ${data.replacementCoach || "replacement coach"}`)}>Grant Temporary Access</button></>}</div>{data.replacementCoach && <div className="temporary-access"><strong>{data.replacementCoach}</strong><span>Match Centre · Calendar · Availability · Team Sheet · Match Library · Football Intelligence · AI Analysis · Player Profiles · Session Builder · Equipment · Coach Notes · Training Plan</span><small>Original coach retains ownership · Access expires after event</small></div>}</div>
       <div className="team-operation-panel"><span>MATCH DAY CHECKLIST</span><h3>Event readiness</h3><div className="checklist-grid">{checklistItems.map((item) => <label key={item}><input type="checkbox" checked={Boolean(data.checklist[item])} onChange={() => persist({ ...data, checklist: { ...data.checklist, [item]: !data.checklist[item] } }, "Checklist saved")} /><span>{item}</span></label>)}</div></div></div>
       <div className="team-operation-panel"><span>TEAM SHEET</span><h3>Starters, bench, unavailable and leadership</h3><div className="team-sheet-leaders"><label>Captain<select value={data.captain} onChange={(event) => persist({ ...data, captain: event.target.value }, "Captain updated")}>{players.map((name) => <option key={name}>{name}</option>)}</select></label><label>Vice Captain<select value={data.viceCaptain} onChange={(event) => persist({ ...data, viceCaptain: event.target.value }, "Vice captain updated")}>{players.map((name) => <option key={name}>{name}</option>)}</select></label></div><div className="team-sheet-grid">{[["starters","Starters"],["bench","Bench"],["unavailable","Unavailable"]].map(([group,label]) => <article key={group}><h4>{label}</h4>{data[group].map((name) => <div key={name}><span>{name}</span><select value={group} onChange={(event) => movePlayer(name,event.target.value)}><option value="starters">Starter</option><option value="bench">Bench</option><option value="unavailable">Unavailable</option></select></div>)}</article>)}</div></div></>}
+    {completion && <WorkflowCompletion title="Attendance Updated Successfully" message={`${personName}'s response is synchronised across MatchVision.`} actions={[{ label: "Return to Dashboard", primary: true, onClick: () => onNavigate?.("dashboard") }, { label: "Return to Team Operations", onClick: () => { setCompletion(false); onNavigate?.("team"); } }]} />}
     {notice && <div className="team-ops-notice">{notice}</div>}
   </section>;
 }

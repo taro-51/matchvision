@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./App.css";
+import "./EnterprisePolish.css";
 import Dashboard from "./pages/Dashboard";
 import LiveGame from "./pages/LiveGame";
 import MatchLibrary from "./pages/MatchLibrary";
@@ -19,6 +20,7 @@ import AdminFoundationPage from "./pages/AdminFoundationPage";
 import PlayerRecognition, { AdminRewardsManagement } from "./pages/PlayerRecognition";
 import { MobileDrawer, NavigationItems } from "./components/AppNavigation";
 import AIStudio from "./components/AIStudio";
+import WorkflowNavigation from "./components/WorkflowNavigation";
 import springvaleLogo from "./assets/springvale-city-logo.png";
 
 const navigationCatalog = [
@@ -483,6 +485,9 @@ export default function App() {
   const [page, setPage] = useState("dashboard");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [globalSearch, setGlobalSearch] = useState("");
+  const [navigationOrigin, setNavigationOrigin] = useState(null);
+  const scrollPositions = useRef({});
+  const newLogin = useRef(false);
 
   const visibleNavigation = sessionUser
     ? navigationConfig[sessionUser.role]
@@ -512,7 +517,16 @@ export default function App() {
     };
   }, [isMobileMenuOpen]);
 
-  function navigateTo(nextPage) {
+  useEffect(() => {
+    const position = page === "dashboard" && !newLogin.current ? scrollPositions.current.dashboard || 0 : 0;
+    const frame = window.requestAnimationFrame(() => window.scrollTo({ top: position, behavior: "auto" }));
+    newLogin.current = false;
+    return () => window.cancelAnimationFrame(frame);
+  }, [page, sessionUser]);
+
+  function navigateTo(nextPage, options = {}) {
+    scrollPositions.current[page] = window.scrollY;
+    if (!options.preserveReturn && nextPage !== page) setNavigationOrigin({ page, label: currentPage.label });
     setPage(nextPage);
     setGlobalSearch("");
     setIsMobileMenuOpen(false);
@@ -523,6 +537,8 @@ export default function App() {
   }
 
   function login(account) {
+    newLogin.current = true;
+    scrollPositions.current.dashboard = 0;
     setSessionUser(account);
     setPage("dashboard");
 
@@ -679,6 +695,7 @@ export default function App() {
         </header>
 
         <div className="content">
+          <WorkflowNavigation page={page} label={currentPage.label} origin={navigationOrigin} onNavigate={navigateTo} />
           {page === "dashboard" && (
             <Dashboard
               role={sessionUser.role}
@@ -769,7 +786,7 @@ export default function App() {
 
           {page === "session-builder" &&
             sessionUser.role === "coach" && (
-              <SessionBuilder />
+              <SessionBuilder onNavigate={navigateTo} />
             )}
 
           {sessionUser.role === "admin" && adminHubRouteIds.has(page) && (

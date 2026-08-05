@@ -1155,7 +1155,7 @@ function TeamHubPage({ role = "parent", onNavigate }) {
       </section>
 
       {!familyMode && <CoachCommitment onNavigate={onNavigate} />}
-      <TeamOperations key={`${role}-${selectedChild.id}`} role={role} personName={familyMode ? selectedChild.name : "Lisa Pitsos"} hideCoachAvailability={!familyMode} />
+      <TeamOperations key={`${role}-${selectedChild.id}`} role={role} personName={familyMode ? selectedChild.name : "Lisa Pitsos"} hideCoachAvailability={!familyMode} onNavigate={onNavigate} />
 
       {familyMode ? (
         <>
@@ -4898,7 +4898,7 @@ export default function PlaceholderPage({ page, userRole, role, onNavigate }) {
       try { activePlayerId = localStorage.getItem("matchvisionActivePlayerId") || activePlayerId; } catch { /* Use the first linked child. */ }
       attendancePerson = sessionUser?.linkedChildren?.find((child) => child.id === activePlayerId)?.name || sessionUser?.linkedChildren?.[0]?.name || attendancePerson;
     }
-    return <><TeamOperations role={loggedInRole} personName={attendancePerson} /><AttendancePage /></>;
+    return <><TeamOperations role={loggedInRole} personName={attendancePerson} onNavigate={onNavigate} /><AttendancePage /></>;
   }
 
   if (page === "calendar") {

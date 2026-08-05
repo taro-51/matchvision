@@ -1,5 +1,6 @@
 import { useState } from "react";
 import "./Dashboard.css";
+import "./DashboardPolish.css";
 import springvaleLogo from "../assets/springvale-city-logo.png";
 import { demoPlayerProfiles } from "../data/playerProfile";
 import { getRecognitionRecords } from "../data/recognition";
@@ -112,6 +113,8 @@ export default function Dashboard({ role = "coach", user, onNavigate, onLaunchAI
   ];
 
   return <div className="premium-dashboard">
+    <MatchCentre role={role} child={child} intelligence={intelligence} onNavigate={onNavigate} />
+
     <section className={`premium-ai-update ${role}`}><div><span>✦ MATCHVISION AI · LATEST CONNECTED UPDATE</span><h1>{role === "coach" ? "Today's coaching priorities" : question}</h1><p>{role === "coach" ? "Defending wide overloads is this week's priority. Session Builder and the equipment checklist are ready; three players require development review." : summary}</p></div><aside><strong>{role === "coach" ? intelligence.findings.priority : role === "parent" ? child.trend : role === "player" ? child.focus : `${intelligence.club.developmentTrend} development`}</strong><small>Updated from the latest connected match</small></aside><button type="button" onClick={() => onNavigate(role === "coach" || role === "admin" ? "football-intelligence" : "player-development")}>View full insight →</button></section>
 
     {role === "parent" && <section className="premium-selector"><div><span>WHO ARE YOU VIEWING?</span><h2>Select a child</h2></div><div>{linkedChildren.map((item) => <button type="button" className={activeChildId === item.id ? "active" : ""} key={item.id} onClick={() => { setActiveChildId(item.id); try { localStorage.setItem("matchvisionActivePlayerId", item.id); } catch { /* Dashboard selection remains active in memory. */ } }}><i>{demoPlayerProfiles[item.id]?.initials || item.name.slice(0,2)}</i><strong>{item.name}</strong><small>{item.team}</small></button>)}</div></section>}
@@ -119,7 +122,6 @@ export default function Dashboard({ role = "coach", user, onNavigate, onLaunchAI
     {role === "admin" && <section className="premium-context-selector"><label><span>CURRENT CLUB</span><select value={club} onChange={(event) => setClub(event.target.value)}><option>Springvale City Soccer Club</option></select></label><p>Future-ready club context: <strong>{club}</strong></p></section>}
 
     {["parent", "player", "coach"].includes(role) && <DashboardEventCard key={`${role}-${child.id}`} role={role} personName={child.name} onNavigate={onNavigate} />}
-    <MatchCentre role={role} child={child} intelligence={intelligence} onNavigate={onNavigate} />
     {role === "admin" && <TeamOperations key={role} compact role={role} personName={user?.name} />}
     <section className={`dashboard-ai-studio ${role}`}>
       <div><span>MATCHVISION AI STUDIO</span><h2>{role === "parent" ? `Turn ${child.name}'s match into a private development review.` : role === "player" ? "Turn my match into my next development step." : role === "admin" ? "Turn club match footage into connected club intelligence." : "Upload one match. Prepare the entire coaching workflow."}</h2><p>One shared workflow updates the existing Match Library, AI Analysis, highlights and role-appropriate development tools.</p></div>

@@ -1,5 +1,5 @@
 import CoachHubShared from "./CoachHubShared";
 
-export default function SessionBuilder() {
-  return <CoachHubShared page="session-builder" />;
+export default function SessionBuilder({ onNavigate }) {
+  return <CoachHubShared page="session-builder" onNavigate={onNavigate} />;
 }
