@@ -1,6 +1,9 @@
 import { useMemo, useRef, useState } from "react";
 import "./MatchLibrary.css";
-import { saveIntelligence } from "../lib/intelligence";
+import "./MatchWorkspace.css";
+import { getIntelligence, saveIntelligence } from "../lib/intelligence";
+import { archiveMatchWorkspace, ensureMatchWorkspaces } from "../lib/matchArchive";
+import MatchIntelligenceReport from "../components/MatchIntelligenceReport";
 
 const skills = [
   "All analytics",
@@ -172,6 +175,7 @@ export default function MatchLibrary({
   onLaunchAIStudio,
 }) {
   const fileRef = useRef(null);
+  const workspaceRef = useRef(null);
 
   const canUpload = ["coach", "admin"].includes(role);
   const isRestrictedProfile = ["parent", "player"].includes(role);
@@ -215,6 +219,7 @@ export default function MatchLibrary({
     try { return JSON.parse(localStorage.getItem("matchvisionAIStudioMatches") || "[]"); } catch { return []; }
   });
   const allMatchRecords = [...studioMatches, ...demoMatches];
+  const [matchWorkspaces, setMatchWorkspaces] = useState(() => ensureMatchWorkspaces(allMatchRecords, getIntelligence()));
   const permittedPlayerIds = new Set(permittedPlayers.map((player) => player.id));
   const permittedMatches = isRestrictedProfile
     ? allMatchRecords.filter((match) => match.approved && match.playerIds.some((id) => permittedPlayerIds.has(id)))
@@ -244,6 +249,7 @@ export default function MatchLibrary({
   const visibleMatches = permittedMatches.filter((match) => !deletedMatchIds.includes(match.id));
   const [selectedMatchId, setSelectedMatchId] = useState(permittedMatches[0]?.id || null);
   const selectedMatchRecord = visibleMatches.find((match) => match.id === selectedMatchId) || visibleMatches[0];
+  const selectedWorkspace = selectedMatchRecord ? matchWorkspaces[String(selectedMatchRecord.workspaceId || selectedMatchRecord.id)] : null;
 
   const filteredAnalytics = useMemo(() => {
     const rows =
@@ -343,7 +349,11 @@ export default function MatchLibrary({
     };
 
     try {
-      saveIntelligence(analysis);
+      const connected = saveIntelligence(analysis);
+      if (selectedMatchRecord) {
+        const workspace = archiveMatchWorkspace(selectedMatchRecord, connected);
+        setMatchWorkspaces((current) => ({ ...current, [String(selectedMatchRecord.workspaceId || selectedMatchRecord.id)]: workspace }));
+      }
       window.localStorage.setItem(
         "matchvisionDemoVideoName",
         analysis.sourceFile
@@ -458,7 +468,7 @@ export default function MatchLibrary({
           </header>
 
           {visibleMatches.map((match) => (
-            <button key={match.id} className={selectedMatchId === match.id ? "active" : ""} onClick={() => { setSelectedMatchId(match.id); showToast(`${match.title} opened`); }}>
+            <button key={match.id} className={selectedMatchId === match.id ? "active" : ""} onClick={() => { setSelectedMatchId(match.id); showToast(`${match.title} workspace restored`); window.setTimeout(() => workspaceRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50); }}>
               <span>▶</span>
               <div>
                 <strong>{matchTitles[match.id] || match.title}</strong>
@@ -546,6 +556,8 @@ export default function MatchLibrary({
       </div>
 
       {canUpload && selectedMatchRecord && <section className="match-management"><div><span>COACH & ADMIN MATCH CONTROLS</span><h3>{matchTitles[selectedMatchRecord.id] || selectedMatchRecord.title}</h3><p>Manage metadata and continue into the existing analysis workflow.</p></div><div><button type="button" onClick={() => { const title = window.prompt("Edit match title", matchTitles[selectedMatchRecord.id] || selectedMatchRecord.title); if (title?.trim()) { setMatchTitles((current) => ({ ...current, [selectedMatchRecord.id]: title.trim() })); showToast("Match details updated"); } }}>Edit</button><button type="button" className={taggedMatchIds.includes(selectedMatchRecord.id) ? "active" : ""} onClick={() => { setTaggedMatchIds((current) => current.includes(selectedMatchRecord.id) ? current.filter((id) => id !== selectedMatchRecord.id) : [...current, selectedMatchRecord.id]); showToast("Match tag updated"); }}>{taggedMatchIds.includes(selectedMatchRecord.id) ? "Tagged ✓" : "Tag Match"}</button><button type="button" onClick={() => onNavigate("highlights")}>Highlights</button><button type="button" onClick={() => onNavigate("team")}>Team Statistics</button><button type="button" className="danger" onClick={() => { if (window.confirm("Remove this match from the demonstration library?")) { setDeletedMatchIds((current) => [...current, selectedMatchRecord.id]); setSelectedMatchId(visibleMatches.find((match) => match.id !== selectedMatchRecord.id)?.id || null); showToast("Match removed from the library"); } }}>Delete</button></div></section>}
+
+      {selectedMatchRecord?.status === "AI complete" && selectedWorkspace && <section className="match-workspace" ref={workspaceRef}><header><div><span>PERMANENT AI MATCH WORKSPACE</span><h2>{matchTitles[selectedMatchRecord.id] || selectedMatchRecord.title}</h2><p>Generated {selectedWorkspace.generatedAt ? new Date(selectedWorkspace.generatedAt).toLocaleString() : selectedMatchRecord.date} · Every insight below belongs to this archived match.</p></div><b>AI RECORD RESTORED</b></header><MatchIntelligenceReport key={`${selectedWorkspace.id}-${role}`} role={role} user={user} workspace={selectedWorkspace} compact onNavigate={onNavigate} /></section>}
 
       <section className="analytics-search-panel">
         <div>

@@ -1079,7 +1079,6 @@ function getPlayerById(id) {
 }
 
 function TeamHubPage({ role = "parent", onNavigate }) {
-  const setRole = () => {};
   const intelligence = getIntelligence();
   const familyMode = role === "parent" || role === "player";
   const visibleChildren = role === "player" ? [parentChildren[0]] : parentChildren;
@@ -1099,6 +1098,21 @@ function TeamHubPage({ role = "parent", onNavigate }) {
   function openFullReport(player) {
     setSelectedPlayer(player);
     setFullReportOpen(true);
+  }
+
+  function openTeamEvidence() {
+    const destination = role === "parent" ? "child-analysis" : "analysis";
+    onNavigate?.(destination);
+  }
+
+  function handleRolePreview(requestedRole) {
+    const permitted = requestedRole === "parent" ? familyMode : !familyMode;
+    if (!permitted) {
+      showMessage("Role preview is restricted to the signed-in account");
+      return;
+    }
+    setActiveTab(requestedRole === "parent" ? "Overview" : "Squad");
+    showMessage(`${requestedRole === "parent" ? "Family" : "Team coaching"} view already active`);
   }
 
   return (
@@ -1122,8 +1136,7 @@ function TeamHubPage({ role = "parent", onNavigate }) {
           <button
             type="button"
             onClick={() => {
-              setRole("parent");
-              setActiveTab("Overview");
+              handleRolePreview("parent");
             }}
             style={{
               ...styles.teamHubRoleButton,
@@ -1136,8 +1149,7 @@ function TeamHubPage({ role = "parent", onNavigate }) {
           <button
             type="button"
             onClick={() => {
-              setRole("coach");
-              setActiveTab("Squad");
+              handleRolePreview("coach");
             }}
             style={{
               ...styles.teamHubRoleButton,
@@ -1151,7 +1163,7 @@ function TeamHubPage({ role = "parent", onNavigate }) {
 
       <section style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: "16px", alignItems: "center", marginBottom: "16px", padding: "18px", border: "1px solid #303b47", borderRadius: "14px", background: "linear-gradient(135deg,#151d27,#10171f)" }}>
         <div><span style={styles.cardEyebrow}>MATCHVISION AI · TEAM UPDATE</span><h3 style={styles.cardTitle}>{familyMode ? "Progress, availability and the next team moment" : `Prepare for ${intelligence.findings.priority.toLowerCase()}`}</h3><p style={{ margin: "7px 0 0", color: "#9aa6b3", lineHeight: 1.55 }}>{familyMode ? intelligence.player.parentSummary : `${intelligence.findings.teamCompactness} compactness was identified in the latest match. ${intelligence.recommendedSession.title} is ready for the coaching team.`}</p></div>
-        <button type="button" onClick={() => setActiveTab(familyMode ? "AI report" : "AI insights")} style={{ minHeight: "44px", padding: "10px 14px", border: "1px solid #d63a4e", borderRadius: "9px", color: "#fff", background: "#c62b3f" }}>Open team evidence →</button>
+        <button type="button" onClick={openTeamEvidence} style={{ minHeight: "44px", padding: "10px 14px", border: "1px solid #d63a4e", borderRadius: "9px", color: "#fff", background: "#c62b3f" }}>Open team evidence →</button>
       </section>
 
       {!familyMode && <CoachCommitment onNavigate={onNavigate} />}
